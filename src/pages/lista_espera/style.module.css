@@ -1,0 +1,72 @@
+.isMobile {
+    width: 35%;
+    height: 40px;
+    padding: 5px;
+    color: white;
+    outline: none;
+    margin: 2px;
+    border-radius: 10px;
+    border: none;
+    padding: 5px;
+     box-shadow: 2px 2px 10px black;
+    transition: 200ms;
+     &:active{
+        transform: scale(1.1);
+    }
+}
+
+.isDesktop {
+    width: 200px;
+    outline: none;
+    border: none;
+    margin: 5px;
+    padding: 10px;
+    color: white;
+    border-radius: 5px;
+     box-shadow: 1px 1px 5px 1px rgb(110, 110, 110);
+    transition: 1ms;
+     &:active{
+        transform: scale(1.01);
+    }
+}
+
+.tableContainer {
+
+    max-height: 300px;
+    /* valor padrão (notebook médio) */
+}
+
+/* 📱 Mobile (0 - 600px) */
+@media (max-width: 600px) {
+    .table-container {
+        max-height: 100px;
+    }
+}
+
+/* 📱 Tablet (600px - 900px) */
+@media (min-width: 601px) and (max-width: 900px) {
+    .table-container {
+        max-height: 100px;
+    }
+}
+
+/* 💻 Notebook pequeno (900px - 1200px) */
+@media (min-width: 901px) and (max-width: 1200px) {
+    .table-container {
+        max-height: 100px;
+    }
+}
+
+/* 🖥️ Desktop (1200px - 1536px) */
+@media (min-width: 1201px) and (max-width: 1536px) {
+    .table-container {
+        max-height: 100px;
+    }
+}
+
+/* 🖥️ Ultrawide (1536px+) */
+@media (min-width: 1537px) {
+    .table-container {
+        max-height: 100px;
+    }
+}

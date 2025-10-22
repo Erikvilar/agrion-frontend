@@ -1,0 +1,27 @@
+*{
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+.safeMobile {
+  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px) 16px;
+  background-color: #ececec;
+  width: 100%;
+
+  box-sizing: border-box;  
+ 
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+}
+
+.safeDesktop {
+  box-sizing: border-box;
+  background-color: #ffffffab;
+  box-sizing: border-box;
+  height: 100vh;
+
+ 
+}
