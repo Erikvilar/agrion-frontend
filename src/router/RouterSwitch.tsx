@@ -1,5 +1,4 @@
 import { Route, Routes, useLocation, useNavigate, type To } from "react-router-dom";
-import { CadastroScreen } from "../pages/cadastro/CadastroScreen";
 import { useIsMobile } from "../hooks/useIsMobile";
 import Adaptive from "../components/adaptive-component/Component";
 import MenuLeft from "../components/menu/Component";
@@ -8,12 +7,13 @@ import { LoginScreen } from "../pages/login/LoginScreen";
 import ListaEspera from "../pages/lista_espera/ListaEspera";
 import Dashboard from "../pages/dashhboard/Dashboard";
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import { useState } from "react";
 const RouterSwitch = () => {
    
     const isMobile = useIsMobile();
     const location = useLocation();
     const avatar = localStorage.getItem("avatar");
-
+    const [isModalOpen, setIsModalOpen] = useState(false)
     const pathAtual = location.pathname;
 
     const ButtonDefault =  ({className, route, children }:
@@ -45,10 +45,10 @@ const RouterSwitch = () => {
 
     const avatarDefault = "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg"
     const iconAvatar:string | null = avatar != null ? avatar : avatarDefault
-
+    const isPageLogin = pathAtual == "/" ? true :false;
     return (
         <Adaptive>
-            {isMobile ? <MenuLeft /> :
+            {isMobile ?<MenuLeft avatar={iconAvatar} isPageLogin={isPageLogin} setIsOpen={setIsModalOpen}/> :
                 <nav className={styles.navbar}>
                     <ul>
                         {condicionalRender(pathAtual)}
@@ -61,8 +61,7 @@ const RouterSwitch = () => {
             <Routes>
                 <Route path="/" element={<LoginScreen />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/cadastro" element={<CadastroScreen />} />
-                <Route path="/lista_espera" element={<ListaEspera />} />
+                <Route path="/lista_espera" element={<ListaEspera  setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen}/>} />
             </Routes>
 
             {isMobile ? null :

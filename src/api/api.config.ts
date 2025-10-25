@@ -1,6 +1,6 @@
 
 
-const env: string = "locaL";
+const env: string = "prod";
 
 interface ApiConfig {
   BASE_URL: string;
@@ -19,14 +19,14 @@ const devConfig: ApiConfig = {
 };
 
 const prodConfig: ApiConfig = {
-  BASE_URL: "https://api.seusite.com/api",
+  BASE_URL: "https://back.stackpanel.com.br/v1/agrion/",
   TIMEOUT_MS: 8000,
 };
 
 
 
 const config: ApiConfig =
-  env === "production"
+  env === "prod"
     ? prodConfig
     : env === "development"
     ? devConfig

@@ -1,7 +1,7 @@
 export default interface CadastroDTO {
     codigoCadastro?:number;
     nomeMotorista: string;
-    telefone: number;
+    telefone: number | null;
     cpf: string;
     corVeiculo: string;
     placa: string;

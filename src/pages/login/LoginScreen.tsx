@@ -1,6 +1,6 @@
 
 import { Box, Button, FormControl, FormGroup, TextField } from "@mui/material"
-import styles from "./styles.module.css"
+
 import Container from "../../components/container-component/Component"
 import { green } from "@mui/material/colors"
 import type { LoadingIndicatorRef } from "../../components/loading-indicator/Component"
@@ -13,9 +13,7 @@ import ApiServices from "../../services/api-service"
 import { InfoModal } from "../../components/modal-informativo/Component"
 import { ActionType } from "../../components/modal-informativo/Component"
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+
 
 export type InfoState = {
     type?: "info" | "success" | "warning" | "error";
@@ -91,7 +89,10 @@ export const LoginScreen = () => {
                 const { status, success, data, message } = await ApiServices.login(user)
                 console.log(status, success, data)
                 if (success) {
+                    
+                
                     localStorage.setItem("token", data.token);
+                    localStorage.setItem("user", data.fullName)
                     localStorage.setItem("avatar", data.avatar);
                     navigation("/lista_espera")
                 }

@@ -1,12 +1,13 @@
-const Constants = {
+const Constants:{ [key: string]: string } = {
   //cores dos botoes de status
-  INATIVO: "#C9CDCF",
-  RECEBIDO: "#0046FF",
-  AGUARDANDO: "#FF8040",
-  CARREGAMENTO: "#ddb550ff",
-  DESPACHE: "#379777",
-  ATUALIZAR:"#1071b6ff",
-  SALVAR:"#288d00ff",
+  INATIVO: "#A0A0A0",       // Cinza médio para inativo, menos agressivo
+  RECEBIDO: "#1565C0",      // Azul forte, confiável e claro
+  AGUARDANDO: "#FFA726",    // Laranja suave, chamando atenção mas sem agredir
+  CARREGAMENTO: "#FFD54F",  // Amarelo claro, símbolo de processo/atenção
+  DESPACHE: "#43A047",      // Verde vibrante, sucesso e pronto para despacho
+  ATUALIZAR: "#1E88E5",     // Azul vivo, ação de atualização
+  SALVAR: "#2E7D32",        // Verde escuro, ação positiva (salvar)
+
 
 
 

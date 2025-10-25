@@ -1,4 +1,4 @@
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material"
 import { useIsMobile } from "../../hooks/useIsMobile";
 import Constants from "../../constants/Constants";
 import { notificationService } from "../../services/notification-service";
@@ -7,16 +7,20 @@ import ApiServices from "../../services/api-service";
 import React, { useCallback, useEffect, useState } from "react";
 import { enviarNotificacao } from "../../utils/enviarNotificacao";
 import type CadastroDTO from "../../model/CadastroDTO";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface TabelaProps {
   rows: CadastroDTO[];
+  fetchTodos: () => void;
 }
-
 
 
 const TableRowMemo = React.memo(({
   row,
+  index,
   updatedRow,
   onInputChange,
   handleMudarStatus,
@@ -24,7 +28,9 @@ const TableRowMemo = React.memo(({
   statusColor,
   widthSizeSx,
   fontSizeSx,
-  salvarLinha, // nova prop para salvar linha no onBlur
+  salvarLinha,
+  expanded,        // agora vem por props
+  onChange,        // agora vem por props // nova prop para salvar linha no onBlur
 }: {
   row: CadastroDTO;
   updatedRow: CadastroDTO;
@@ -34,9 +40,12 @@ const TableRowMemo = React.memo(({
   statusColor: Record<string, string>;
   widthSizeSx: any;
   fontSizeSx: any;
-  salvarLinha: (updatedRow: CadastroDTO) => void; // nova função passada por props
+  index: number,
+  salvarLinha: (updatedRow: CadastroDTO) => void;
+  expanded: boolean;
+  onChange: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }) => {
-  
+
   const disableUnderline = {
 
     "& .MuiInputBase-root": {
@@ -68,7 +77,9 @@ const TableRowMemo = React.memo(({
       borderBottom: "none",
     },
   }
-
+  const dataCriacaoFormatada = row.dataCriacao
+    ? format(new Date(row.dataCriacao), "dd/MM/yyyy HH:mm", { locale: ptBR })
+    : "-";
   return (
     <TableRow
       key={row.codigoCadastro}
@@ -77,28 +88,194 @@ const TableRowMemo = React.memo(({
         "&:hover": { backgroundColor: "#acacac27", cursor: "pointer" },
       }}
     >
-      <TableCell component="th" scope="row" sx={{ maxWidth: widthSizeSx }}>
-        <Box display="flex" flexDirection="column" >
+      {isMobile ? (
+ <Accordion
+      expanded={expanded}
+      onChange={onChange}
+      sx={{
+        mb: 1.5,
+        borderRadius: 2,
+        overflow: "hidden",
+        boxShadow: "0px 4px 12px rgba(0,0,0,0.1)",
+        "&:before": { display: "none" },
+      }}
+    >
 
-          <TextField
-            sx={{ ...disableUnderlineFirstLine}}
-            placeholder="Nome do motorista"
-            value={row.nomeMotorista}
-
-            onChange={(e) =>
-              onInputChange(row.codigoCadastro!, "nomeMotorista", e.target.value)
-            }
-            onBlur={() => salvarLinha(updatedRow)}
-          />
-
-          <Typography variant="caption" color="text.secondary">
-            <b>Espera:</b> <TempoDeEspera dataCriacao={row.dataCriacao} />
+      <AccordionSummary
+        expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+        sx={{
+          backgroundColor: Constants[row.status] || "#888",
+          minHeight: 48,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+        }}
+      >
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          <Typography
+            color="white"
+            sx={{
+              fontSize: 14,
+              fontWeight: 700,
+              textTransform: "capitalize",
+            }}
+          >
+            {index + 1}º - {row.nomeMotorista}
+          </Typography>
+          <Typography color="white" sx={{ fontSize: 12, opacity: 0.9 }}>
+            {row.marca} • {row.modelo}
           </Typography>
         </Box>
-      </TableCell>
+      </AccordionSummary>
+
+
+      <AccordionDetails
+        sx={{
+          backgroundColor: "#fafafa",
+          px: 2,
+          py: 1.5,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+        }}
+      >
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <Box sx={{width:"100%"}}>
+          <Typography variant="body2">
+            <strong>Motorista:</strong> {row.nomeMotorista}
+          </Typography>
+          </Box>
+
+
+          <Typography variant="body2">
+            <strong>Placa:</strong> {row.placa || "-"}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Código:</strong> {row.codigoCadastro ?? "-"}
+          </Typography>
+        </Box>
+
+        {/* Linha 2: Marca + Modelo */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography variant="body2">
+            <strong>Marca:</strong> {row.marca || "-"}
+          </Typography>
+          <Typography variant="body2">
+            <strong>Modelo:</strong> {row.modelo || "-"}
+          </Typography>
+        </Box>
+
+        {/* Linha 3: Motorista + Data */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+          }}
+        >
+    
+          <Typography variant="body2">
+            <strong>Data:</strong> {dataCriacaoFormatada}
+          </Typography>
+        </Box>
+
+        <Divider sx={{ my: 1 }} />
+
+        {/* Tempo de espera e status */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            <b>Espera:</b> <TempoDeEspera dataCriacao={row.dataCriacao} />
+          </Typography>
+
+          <TableCell align="center" sx={{ borderBottom: "none", p: 0 }}>
+            <Button
+              onClick={() => handleMudarStatus(row)}
+              sx={{
+                minWidth: widthSizeSx,
+                backgroundColor: statusColor[row.status] || "#ccc",
+                textTransform: "none",
+                px: 2,
+                py: 0.8,
+                borderRadius: 2,
+                "&:hover": {
+                  backgroundColor: statusColor[row.status] || "#aaa",
+                },
+              }}
+              variant="contained"
+            >
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                fontSize={fontSizeSx}
+                color="white"
+              >
+                {row.status}
+              </Typography>
+            </Button>
+          </TableCell>
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+      ) : (<></>)}
+
+
 
       {!isMobile && (
         <>
+          <TableCell component="th" scope="row" sx={{ maxWidth: widthSizeSx }}>
+            <Box display="flex" flexDirection="column" >
+
+              <TextField
+                sx={{ ...disableUnderlineFirstLine }}
+                placeholder="Nome do motorista"
+                value={row.nomeMotorista}
+
+                onChange={(e) =>
+                  onInputChange(row.codigoCadastro!, "nomeMotorista", e.target.value)
+                }
+
+              />
+
+              <Typography variant="caption" color="text.secondary">
+                <b>Espera:</b> <TempoDeEspera dataCriacao={row.dataCriacao} />
+              </Typography>
+            </Box>
+          </TableCell>
+          <TableCell align="center">
+
+            <TextField
+              sx={{ ...disableUnderline }}
+              variant="standard"
+              placeholder="Telefone"
+              value={row.telefone}
+              onChange={(e) =>
+                onInputChange(row.codigoCadastro!, "telefone", e.target.value)
+              }
+
+            />
+          </TableCell>
           <TableCell align="center">
 
             <TextField
@@ -109,7 +286,7 @@ const TableRowMemo = React.memo(({
               onChange={(e) =>
                 onInputChange(row.codigoCadastro!, "placa", e.target.value)
               }
-              onBlur={() => salvarLinha(updatedRow)}
+
             />
           </TableCell>
           <TableCell align="center">
@@ -123,7 +300,7 @@ const TableRowMemo = React.memo(({
               onChange={(e) =>
                 onInputChange(row.codigoCadastro!, "cpf", e.target.value)
               }
-              onBlur={() => salvarLinha(updatedRow)}
+
             />
           </TableCell>
 
@@ -137,7 +314,7 @@ const TableRowMemo = React.memo(({
               onChange={(e) =>
                 onInputChange(row.codigoCadastro!, "numeroOrdem", Number(e.target.value))
               }
-              onBlur={() => salvarLinha(updatedRow)}
+
             />
           </TableCell>
 
@@ -151,7 +328,7 @@ const TableRowMemo = React.memo(({
               onChange={(e) =>
                 onInputChange(row.codigoCadastro!, "pesoCarregado", Number(e.target.value))
               }
-              onBlur={() => salvarLinha(updatedRow)}
+
             />
           </TableCell>
 
@@ -165,7 +342,7 @@ const TableRowMemo = React.memo(({
               onChange={(e) =>
                 onInputChange(row.codigoCadastro!, "pesoVazio", Number(e.target.value))
               }
-              onBlur={() => salvarLinha(updatedRow)}
+
             />
           </TableCell>
 
@@ -173,42 +350,44 @@ const TableRowMemo = React.memo(({
             <TextField
               sx={{ ...disableUnderline }}
               variant="standard"
-
+              disabled
               placeholder="Nome do vigia"
               value={row.vigia ?? ""}
               onChange={(e) =>
                 onInputChange(row.codigoCadastro!, "vigia", e.target.value)
               }
-              onBlur={() => salvarLinha(updatedRow)}
+
             />
+          </TableCell>
+          <TableCell align="center">
+            <Button
+              onClick={() => row.status == "SALVAR" ? salvarLinha(updatedRow) : handleMudarStatus(row)}
+              sx={{
+                maxWidth: widthSizeSx,
+                backgroundColor: statusColor[row.status] || "#ccc",
+              }}
+
+              variant="contained"
+            >
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                fontSize={fontSizeSx}
+                color="white"
+              >
+                {row.status}
+              </Typography>
+            </Button>
           </TableCell>
         </>
       )}
 
-      <TableCell align="center">
-        <Button
-          onClick={() => handleMudarStatus(row)}
-          sx={{
-            maxWidth: widthSizeSx,
-            backgroundColor: statusColor[row.status] || "#ccc",
-          }}
-          variant="contained"
-        >
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            fontSize={fontSizeSx}
-            color="white"
-          >
-            {row.status}
-          </Typography>
-        </Button>
-      </TableCell>
+
     </TableRow>
   );
 });
 
-const Tabela = ({ rows }) => {
+const Tabela = ({ rows, fetchTodos }: TabelaProps) => {
   const isMobile = useIsMobile();
 
   const [tableRows, setTableRows] = useState<CadastroDTO[]>(rows);
@@ -218,6 +397,10 @@ const Tabela = ({ rows }) => {
   useEffect(() => {
     setTableRows([...rows]);
   }, [rows]);
+  const [expanded, setExpanded] = useState<number | false>(false);
+  const handleAccordionChange = (panelId: number) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpanded(isExpanded ? panelId : false);
+  };
 
   const handleMudarStatus = useCallback(async (row: CadastroDTO) => {
     const { codigoCadastro, status, telefone } = row;
@@ -252,7 +435,7 @@ const Tabela = ({ rows }) => {
 
     try {
       const { data, success, message } = await apiCallPromise;
-      if (success) {
+      if (success && telefone != null) {
         setTableRows(data);
 
         enviarNotificacao(
@@ -286,17 +469,15 @@ const Tabela = ({ rows }) => {
     },
     []
   );
-  let blurBlocked = false;
-  const salvarLinha = async (updatedRow: CadastroDTO) => {
-    if (blurBlocked) return;
-    blurBlocked = true
-    console.log("capturada tentativa de salvar")
-    setTimeout(async () => {
-      blurBlocked = false
-      console.log("salvando...")
-      await ApiServices.cadastrar(updatedRow);
-    }, 5000);
 
+  const salvarLinha = async (updatedRow: CadastroDTO) => {
+
+
+    console.log("capturada tentativa de salvar")
+    console.log("salvando...")
+
+    await ApiServices.cadastrar(updatedRow);
+    fetchTodos()
   }
 
   const statusColor: Record<string, string> = {
@@ -338,24 +519,36 @@ const Tabela = ({ rows }) => {
       component={Paper}
       sx={{
         height: {
-          xs: 600,
+          xs: 500,
           sm: 500,
           md: 600,
           lg: 340,
           xl: 700,
         },
+     
         maxHeight: { xl: 710 },
-        overflowY: "auto",
+        scrollBehavior: "smooth",
       }}
     >
       <Table stickyHeader aria-label="sticky table">
         <TableHead style={{ backgroundColor: "#363636f" }}>
           <TableRow >
-            <TableCell sx={{ maxWidth: widthSizeSx, ...tableHeadStyle }}>
-              MOTORISTA
-            </TableCell>
+            {isMobile && (
+              <TableCell sx={{ maxWidth: widthSizeSx, ...tableHeadStyle}}>
+                <div style={{ color: "white", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>  <span style={{ color: "white" }}>LISTA DE MOTORISTAS</span>
+                  <span style={{ color: "white" }}>Total {rows.length}</span>
+                </div>
+
+              </TableCell>
+            )}
             {!isMobile && (
               <>
+                <TableCell sx={{ maxWidth: widthSizeSx, ...tableHeadStyle }}>
+                  MOTORISTA
+                </TableCell>
+                <TableCell align="center" sx={{ ...tableHeadStyle }}>
+                  CONTATO
+                </TableCell>
                 <TableCell align="center" sx={{ ...tableHeadStyle }}>
                   PLACA
                 </TableCell>
@@ -376,19 +569,21 @@ const Tabela = ({ rows }) => {
                 <TableCell align="center" sx={{ ...tableHeadStyle }}>
                   VIGIA
                 </TableCell>
+                <TableCell align="center" sx={{ ...tableHeadStyle }}>
+                  STATUS
+                </TableCell>
               </>
             )}
-            <TableCell align="center" sx={{ ...tableHeadStyle }}>
-              STATUS
-            </TableCell>
+
           </TableRow>
         </TableHead>
 
-        <TableBody>
-          {tableRows.map((row) => (
+        <TableBody >
+          {tableRows.map((row, index) => (
             <TableRowMemo
               key={row.codigoCadastro}
               row={row}
+              index={index}
               salvarLinha={salvarLinha}
               onInputChange={onInputChange}
               handleMudarStatus={handleMudarStatus}
@@ -396,6 +591,8 @@ const Tabela = ({ rows }) => {
               statusColor={statusColor}
               widthSizeSx={widthSizeSx}
               fontSizeSx={fontSizeSx}
+              expanded={expanded === row.codigoCadastro}
+              onChange={handleAccordionChange(row.codigoCadastro!)}  
               updatedRow={updatedRow}
             />
           ))}
