@@ -1,15 +1,16 @@
 const Constants:{ [key: string]: string } = {
   //cores dos botoes de status
-  INATIVO: "#A0A0A0",       // Cinza médio para inativo, menos agressivo
-  RECEBIDO: "#1565C0",      // Azul forte, confiável e claro
-  AGUARDANDO: "#FFA726",    // Laranja suave, chamando atenção mas sem agredir
-  CARREGAMENTO: "#FFD54F",  // Amarelo claro, símbolo de processo/atenção
-  DESPACHE: "#43A047",      // Verde vibrante, sucesso e pronto para despacho
-  ATUALIZAR: "#1E88E5",     // Azul vivo, ação de atualização
-  SALVAR: "#2E7D32",        // Verde escuro, ação positiva (salvar)
+  INATIVO: "#A0A0A0",       // Cinza médio
+  RECEBIDO: "#1565C0",      // Azul forte (chegada/entrada)
+  AGUARDANDO: "#FFA726",    // Laranja suave (espera)
+  CONVOCADO: "#FFD54F",     // Amarelo claro (ação pendente)
+  OPERACAO: "#FFD54F",      // Mesma cor de processo, já que inclui carga/descarga
+  DESPACHE: "#43A047",      // Verde (saída)
+  CONCLUIDO: "#43A047",     // Verde (finalizado
 
 
-
+  ATUALIZAR: "#1E88E5",     // Azul vivo
+  SALVAR: "#2E7D32",        // Verde escuro
 
 
 

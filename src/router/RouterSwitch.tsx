@@ -5,9 +5,10 @@ import MenuLeft from "../components/menu/Component";
 import styles from "./route.module.css"
 import { LoginScreen } from "../pages/login/LoginScreen";
 import ListaEspera from "../pages/lista_espera/ListaEspera";
-import Dashboard from "../pages/dashhboard/Dashboard";
+
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { useState } from "react";
+import Historico from "../pages/historico/Historico";
 const RouterSwitch = () => {
    
     const isMobile = useIsMobile();
@@ -37,7 +38,9 @@ const RouterSwitch = () => {
                 return (
                 <>
                 <ButtonDefault className={styles.buttonDefault} route="/lista_espera" children={(<li>Lista de espera</li>)}/>
-                     <ButtonDefault className={styles.buttonDefault} route="/historico" children={(<li>Histórico</li>)}/></>)
+                <ButtonDefault className={styles.buttonDefault} route="/historico" children={(<li>Histórico</li>)}/>
+                </>
+                     )
             default:
                 return <ButtonDefault className={styles.buttonDefault} route={-1} children={(<li><ArrowBackIosNewIcon sx={{fontSize:18,marginRight:1}} /> Voltar</li>)}/>
         }       
@@ -60,14 +63,11 @@ const RouterSwitch = () => {
 
             <Routes>
                 <Route path="/" element={<LoginScreen />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/historico" element={<Historico />} />
                 <Route path="/lista_espera" element={<ListaEspera  setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen}/>} />
             </Routes>
 
-            {isMobile ? null :
-                <footer className={styles.footer}>
-                    <span className={styles.footerText}>Versão 10.1.0</span>
-                </footer>}
+    
         </Adaptive>
 
     )

@@ -47,7 +47,7 @@ const LoadingIndicator = forwardRef(
                     <div style={styles.loaderWrapper}>
                         <div style={styles.spinner}></div>
                         <img
-                            src={props.image || "https://via.placeholder.com/60"}
+                            src="https://www.datagroconferences.com/wp-content/uploads/2021/06/Agrionfertilizantes_site-1.png"
                             alt="logo"
                             style={styles.image}
                         />

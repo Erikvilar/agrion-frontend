@@ -5,7 +5,7 @@
 }
 .safeMobile {
   padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px) 16px;
-  background-color: #ececec;
+  background-color:"white";
   width: 100%;
   padding-top: 20px;
 

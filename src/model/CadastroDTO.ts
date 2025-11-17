@@ -7,6 +7,9 @@ export default interface CadastroDTO {
     placa: string;
     marca: string;
     modelo: string;
+    operacao:string;
+    tipoProduto:string;
+    produto:string;
     pesoVazio: number;
     pesoCarregado?:number;
     vigia: string;

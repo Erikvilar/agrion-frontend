@@ -1,27 +1,57 @@
-import { Box, CircularProgress, IconButton, InputAdornment, TextField } from "@mui/material";
-import CachedIcon from '@mui/icons-material/Cached';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import OutboxIcon from '@mui/icons-material/Outbox';
-import Tabela from "./Tabela";
-import style from "./style.module.css"
-import { useIsMobile } from "../../hooks/useIsMobile";
-import Constants from "../../constants/Constants";
-import { Search } from "@mui/icons-material";
-import { useCallback, useEffect, useState } from "react";
-import type CadastroDTO from "../../model/CadastroDTO";
-import ApiServices from "../../services/api-service";
-import { green } from "@mui/material/colors";
-import { LeftModal } from "../../components/left-modal-component/LeftModal";
-import { validarCPF } from "../../utils/ValidarCPF";
-import { enviarNotificacao } from "../../utils/enviarNotificacao";
-import { ActionType, InfoModal } from "../../components/modal-informativo/Component";
-import type { InfoState } from "../login/LoginScreen";
 
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import {
+    Accordion,
+    AccordionSummary,
+    AccordionDetails, Box, CircularProgress, IconButton, InputAdornment, TextField,
+    Typography,
+    Collapse
+} from "@mui/material";
+
+import CachedIcon from "@mui/icons-material/Cached";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import Inventory2Icon from "@mui/icons-material/Inventory2";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import SyncIcon from "@mui/icons-material/Sync";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import BlockIcon from "@mui/icons-material/Block";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import Tabela from "./Tabela";
+
+import style from "./style.module.css"
+
+import { useIsMobile } from "../../hooks/useIsMobile";
+
+import Constants from "../../constants/Constants";
+
+import { ArrowRight, Search } from "@mui/icons-material";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type CadastroDTO from "../../model/CadastroDTO";
+
+import ApiServices from "../../services/api-service";
+
+import { green } from "@mui/material/colors";
+
+import { LeftModal } from "../../components/left-modal-component/LeftModal";
+
+
+
+import { enviarNotificacao } from "../../utils/enviarNotificacao";
+
+
+
+
+
+import ModalHelper from "../../components/modal-help/ModalHelper";
+import { ActionType } from "../../components/modal-informativo/Component";
+
+
+
 function createData(
-    codigoCadastro: number | undefined,
+    codigoCadastro: number,
     nomeMotorista: string,
     telefone: number | null,
     cpf: string,
@@ -29,38 +59,48 @@ function createData(
     placa: string,
     marca: string,
     modelo: string,
+    tipoProduto:string,
+    produto:string,
+    operacao:string,
     pesoVazio: number,
     pesoCarregado: number | undefined,
     vigia: string,
+    
     numeroOrdem: number,
     status: string,
     dataCriacao?: string | Date
 
 ) {
     return {
-        codigoCadastro, nomeMotorista, telefone, cpf, corVeiculo, placa, marca, modelo, pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
+        codigoCadastro, nomeMotorista, telefone, cpf, corVeiculo, placa, marca, modelo, tipoProduto,produto,operacao,pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
     };
 }
+
 interface ListaEsperaProps {
-  isModalOpen: boolean;
-  setIsModalOpen: (open: boolean) => void;
+    isModalOpen: boolean;
+    setIsModalOpen: (open: boolean) => void;
 }
-const ListaEspera = ({ isModalOpen, setIsModalOpen }:ListaEsperaProps) => {
+
+
+const TIMEREFRESH = 60000;
+
+const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const isMobile = useIsMobile();
+    const [openFiltro, setOpenFiltro] = useState(false);
 
-    const [info, setInfo] = useState<InfoState>({
-        type: undefined, title: "", message: "", icon: <></>
+    const [isCadastrando, setIsCadastrando] = useState(false)
 
-    });
+  
 
-    const [infoModal, setInfoModal] = useState(false);
 
-  const open = isModalOpen;
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false); 
-  };
+
+    const open = isModalOpen;
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
 
     const [busca, setBusca] = useState("");
 
@@ -69,7 +109,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }:ListaEsperaProps) => {
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const [activeFilter, setActiveFilter] = useState<{ type: 'all' | 'status' | 'search', value: any }>({ type: 'all', value: null });
-
+    const newRowRef = useRef<HTMLTableRowElement | null>(null);
     const [cadastro, SetCadastro] = useState<CadastroDTO>({
         nomeMotorista: "",
         telefone: null,
@@ -80,12 +120,12 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }:ListaEsperaProps) => {
         pesoVazio: 0,
         modelo: "",
         vigia: "",
+        tipoProduto:"",
+        produto:"",
+        operacao: "",
         numeroOrdem: 0,
         status: "",
     })
-
-
-
 
     const buscarPorDescricao = async () => {
         if (!busca) return;
@@ -110,7 +150,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }:ListaEsperaProps) => {
         const { success, data } = await ApiServices.buscarTodos();
         if (success && data) {
             const novaRows = data.map((item: CadastroDTO) =>
-                createData(item.codigoCadastro, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
+                createData(item.codigoCadastro, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
             setRows(novaRows);
         } else {
@@ -129,10 +169,11 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }:ListaEsperaProps) => {
 
         if (response.success && response.data) {
             const novaRows = response.data.map((item: CadastroDTO) =>
-                createData(item.codigoCadastro, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
+  createData(item.codigoCadastro, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
-            setRows(novaRows);
 
+
+            setRows(novaRows);
 
         } else {
             setRows([]);
@@ -140,64 +181,121 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }:ListaEsperaProps) => {
         }
         if (isBackgroundFetch) setIsRefreshing(false);
     }, []);
-     
 
-useEffect(()=>{
-    console.log("funcao chamada")
-    fetchTodos()
-},[setIsModalOpen, isModalOpen])
+    useEffect(() => {
 
-
-
-
+        fetchTodos()
+    }, [setIsModalOpen, isModalOpen])
 
     const buttonstatus = [
-            {
-            id: "1", title: "ATUALIZAR", codigo: null, background: Constants.ATUALIZAR,
+
+
+        {
+            id: "3",
+            title: "RECEBIDO",
+            codigo: 1,
+            background: Constants.RECEBIDO,
+            acao: () => buscarPorStatus(1),
+            icon: <Inventory2Icon style={{ color: "white" }} />
+        },
+
+        {
+            id: "4",
+            title: "AGUARDANDO",
+            codigo: 2,
+            background: Constants.AGUARDANDO,
+            acao: () => buscarPorStatus(2),
+            icon: <HourglassEmptyIcon style={{ color: "white" }} />
+        },
+
+        {
+            id: "5",
+            title: "CONVOCADO",
+            codigo: 3,
+            background: Constants.CONVOCADO,
+            acao: () => buscarPorStatus(3),
+            icon: <CampaignIcon style={{ color: "white" }} />
+        },
+
+        {
+            id: "6",
+            title: "OPERAÇÃO",
+            codigo: 4,
+            background: Constants.OPERACAO,
+            acao: () => buscarPorStatus(4),
+            icon: <SyncIcon style={{ color: "white" }} />  // simboliza processo
+        },
+
+        {
+            id: "7",
+            title: "DESPACHE",
+            codigo: 5,
+            background: Constants.DESPACHE,
+            acao: () => buscarPorStatus(5),
+            icon: <LocalShippingIcon style={{ color: "white" }} />  // saída/transporte
+        },
+
+        {
+            id: "8",
+            title: "CONCLUIDO",
+            codigo: 6,
+            background: Constants.CONCLUIDO,
+            acao: () => buscarPorStatus(6),
+            icon: <CheckCircleIcon style={{ color: "white" }} />  // finalizado
+        },
+
+        {
+            id: "9",
+            title: "INATIVO",
+            codigo: 7,
+            background: Constants.INATIVO,
+            acao: () => buscarPorStatus(7),
+            icon: <BlockIcon style={{ color: "white" }} />
+        }
+    ];
+
+    const buttonActions = [
+        {
+            id: "1",
+            title: "Atualizar",
+            codigo: null,
+            background: "#1976D2", // Azul padrão UX
             acao: () => {
                 setActiveFilter({ type: 'all', value: null });
                 fetchTodos(false);
-            }, icon: isRefreshing ? <CircularProgress size={24} color="inherit" style={{ color: 'white' }} /> : <CachedIcon style={{ color: 'white' }} />
-        },
-        {
-            id: "2", title: "CADASTRO", codigo: null, background: Constants.SALVAR,
-            acao: () => {
-                adicionarLinhaEmBranco()
+
             },
-            icon: isRefreshing ? <CircularProgress size={24} color="inherit" style={{ color: 'white' }} /> : <CachedIcon style={{ color: 'white' }} />
-        },
-        {
-            id: "3", title: "RECEBIDO", codigo: 1, background: Constants.RECEBIDO, acao: () =>
-                buscarPorStatus(1),
-            icon: <AssignmentTurnedInIcon color="success" />
-        },
-        {
-            id: "4", title: "AGUARDANDO", codigo: 2, background: Constants.AGUARDANDO, acao: () =>
-                buscarPorStatus(2),
-            icon: <HourglassEmptyIcon style={{ color: 'white' }} />
-        },
-        {
-            id: "5", title: "CARREGAMENTO", codigo: 3, background: Constants.CARREGAMENTO, acao: () =>
-                buscarPorStatus(3),
-            icon: <LocalShippingIcon />
-        },
-        {
-            id: "6", title: "DESPACHE", codigo: 4, background: Constants.DESPACHE, acao: () =>
-                buscarPorStatus(4),
-            icon: <OutboxIcon />
-        },
-        {
-            id: "7", title: "INATIVO", codigo: 5, background: Constants.INATIVO, acao: () =>
-                buscarPorStatus(5),
-            icon: <></>
+            icon: isRefreshing
+                ? (
+                    <CircularProgress
+                        size={22}
+                        sx={{ color: "#FFFFFF", marginRight: 8 }}
+                    />
+                )
+                : <CachedIcon sx={{ color: "#FFFFFF" }} />
         },
 
-
-    ]
+        {
+            id: "2",
+            title: "Cadastrar",
+            codigo: null,
+            background: "#2E7D32", // Verde positivo e consistente
+            acao: () => {
+                setIsCadastrando(true);
+                adicionarLinhaEmBranco();
+            },
+            icon: <AddCircleIcon sx={{ color: "#FFFFFF" }} />
+        },
+        {
+             id: "3",
+            background: "#238681ff", 
+            icon:   <ModalHelper />
+        }
+    ];
 
     const focused = {
         "& .MuiOutlinedInput-root": {
-            height: isMobile ? 40 : 50,
+            height: 40,
             "&.Mui-focused fieldset": {
                 borderColor: green[500],
             }
@@ -207,65 +305,47 @@ useEffect(()=>{
         }
     }
 
-    const handleClose = ()=> setIsModalOpen(false)
+    const handleClose = () => setIsModalOpen(false)
 
-    const adicionarLinhaEmBranco = async() => {
-      await  fetchTodos()
-      const user = localStorage.getItem("user")
-      if(user){
-           const novaLinha: CadastroDTO = {
-            codigoCadastro: Date.now(), // ID temporário
-            nomeMotorista: "",
-            telefone: null,
-            cpf: "",
-            corVeiculo: "",
-            placa: "",
-            marca: "",
-            modelo: "",
-            pesoVazio: 0,
-            pesoCarregado: undefined,
-            vigia: user,
-            numeroOrdem: 0,
-            status: "SALVAR",
-            dataCriacao: new Date(),
-        };
-          setRows((prevRows) => [novaLinha, ...prevRows]);
-      }else{
-           setInfoModal(true);
+    const adicionarLinhaEmBranco = async () => {
+        await fetchTodos()
+        const user = localStorage.getItem("user")
+        if (user) {
+            const novaLinha: CadastroDTO = {
+                codigoCadastro: 0,
+                nomeMotorista: "",
+                telefone: null,
+                cpf: "",
+                corVeiculo: "",
+                placa: "",
+                marca: "",
+                modelo: "",
+                pesoVazio: 0,
+                pesoCarregado: undefined,
+                vigia: user,
+                numeroOrdem: 0,
+                status: "SALVAR",
+                dataCriacao: new Date(),
+                operacao: "",
+                tipoProduto: "",
+                produto: ""
+            };
+            setRows((prevRows) => [novaLinha, ...prevRows]);
+            setTimeout(() => {
+                newRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 100);
+        } else {
             setInfo({
                 type: ActionType.Error,
-                icon: <WarningAmberRoundedIcon sx={{ fontSize: 48, color: '#f36302ff', mb: 2 }} />,
                 title: "Usuário não informado",
                 message: "Estamos com um problema para capturar seu usuario, faça login novamente"
             });
-      }
-      
-     
-
-      
-    };
-
-    useEffect(() => {
-        const refreshCurrentView = () => {
-            switch (activeFilter.type) {
-                case 'status':
-                    buscarPorStatus(activeFilter.value, true);
-                    break;
-                default:
-                    fetchTodos(true)
-                    break;
-            }
         }
-        console.log("executando refresh...")
-
-        fetchTodos();
-
-        const intervalId = setInterval(refreshCurrentView, 60000);
 
 
-        return () => clearInterval(intervalId);
 
-    }, [activeFilter, fetchTodos, buscarPorStatus]);
+
+    };
 
 
     const [errors, setErrors] = useState({
@@ -280,72 +360,42 @@ useEffect(()=>{
         let newValue = value
 
 
-        if (name == "nomeMotorista") {
-            newValue = value.replace(/[^A-Za-zÀ-ú ]/g, "");
-        }
-        if (name == "corVeiculo") {
-            newValue = value.replace(/[^A-Za-zÀ-ú ]/g, "");
-        }
-
-        if (name === "placa") {
-            newValue = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
-
-            let letras = newValue.slice(0, 3).replace(/[^A-Z]/g, "");
-            let resto = newValue.slice(3);
-            newValue = /^\d+$/.test(resto) ? `${letras}-${resto}` : letras + resto;
-            newValue = newValue.slice(0, 8);
-        }
-        if (name == "cpf") {
-            setErrors({ ...errors, cpf: !validarCPF(value) });
-        }
-
-        if (name == "pesoVazio") {
-            newValue = Number(value.replace(/[^0-9]/g, ""));
-            if (!isNaN(newValue) && newValue > 500) {
-                setErrors({ ...errors, pesoVazio: false });
-            } else {
-                setErrors({ ...errors, pesoVazio: true });
-                console.log("Peso inválido, deve ser maior que 500 kg");
-            }
-        }
         SetCadastro((prev) => ({
             ...prev,
             [name]: newValue
         }))
 
     }
+
     const submitCadastro = async () => {
         if (cadastro.telefone == null) {
-            setInfoModal(true);
+
             setInfo({
                 type: ActionType.Warning,
-                icon: <WarningAmberRoundedIcon sx={{ fontSize: 48, color: '#f9a825', mb: 2 }} />,
                 title: "Por favor informar um telefone valido",
                 message: "Informe um telefone valido abaixo."
             });
-        }else if(cadastro.cpf == null){
-             setInfoModal(true);
+        } else if (cadastro.cpf == null) {
+
             setInfo({
                 type: ActionType.Warning,
-                icon: <WarningAmberRoundedIcon sx={{ fontSize: 48, color: '#f9a825', mb: 2 }} />,
                 title: "Por favor informar CPF válido",
                 message: "Informe um CPF válido para prosseguir"
             });
         }
-        
+
         else {
             const numeroTel = cadastro.telefone.toString().replace(/^\(\d{2}\)\s?|\-/g, "")
             console.log(numeroTel)
             enviarNotificacao("Olá seu veiculo foi inserido no na fila para descarga", `${cadastro.telefone.toString().replace(/^\(\d{2}\)\s?|\-/g, "")}`)
+            cadastro.codigoCadastro = 0;
+            console.log(cadastro)
             await ApiServices.cadastrar(cadastro);
             handleClose();
 
         }
-
-
-
     }
-    
+
     return (
         <Box
             sx={{
@@ -354,21 +404,17 @@ useEffect(()=>{
                 flexDirection: "column",
                 scrollbarWidth: 1,
                 width: "100%",
-      
             }}
         >
 
-            <InfoModal
-                isOpen={infoModal}
-                onClose={() => setInfoModal(false)}
-                type={info.type}
-                title={info.title}
-                icon={info.icon}
-                message={info.message}
-            />
-
             <div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: isMobile ? 0 : 100, marginBottom:4}}>
+
+                <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? 'center' : 'start', marginLeft: isMobile ? 0 : 20, paddingTop: isMobile ? 0 : 100, marginBottom: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: '50%' }}>
+                        <h2 style={{ marginBottom: 10 }}>DASHBOARD GERENCIAL</h2>
+                     
+                    </div>
+
 
                     <TextField
                         type="search"
@@ -381,7 +427,7 @@ useEffect(()=>{
                         onKeyDown={(e) => {
                             if (e.key === "Enter") buscarPorDescricao();
                         }}
-                        sx={{ width: isMobile ? "100%" : "50%", borderRadius: 3, ...focused }}
+                        sx={{ width: isMobile ? "100%" : "50%", borderRadius: 10, ...focused }}
                         slotProps={{
                             input: {
                                 endAdornment: (
@@ -394,27 +440,127 @@ useEffect(()=>{
                             },
                         }}
                     />
+
                 </div>
                 {isMobile ? <></> :
-                    <div style={{ marginTop: 30, display: "flex", flexDirection: "row", padding: 10 }}>
+                    <div style={{ marginTop: 10, display: "flex", flexDirection: "row", padding: 10 }}>
+
+
+                        <Box sx={{ width: "100%" }}>
+
+                            <Box sx={{ display: "flex", flexDirection: "row" }}>
+                                <button
+                                    onClick={() => setOpenFiltro(!openFiltro)}
+
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        padding: "8px 12px",
+                                        backgroundColor: "#e0e0e0",
+                                        borderRadius: 6,
+                                        cursor: "pointer",
+                                        border: "none",
+                                        marginLeft: 3,
+                                        marginBottom: 8,
+                                    }}
+                                >
+                                    <FilterListIcon style={{ marginRight: 8 }} />
+                                    <span style={{ fontWeight: 600 }}>Filtros</span>
+                                    <ArrowRight
+                                        style={{
+                                            marginLeft: 8,
+                                            transform: openFiltro ? "rotate(90deg)" : "rotate(0deg)",
+                                            transition: "0.2s",
+                                        }}
+                                    />
+                                </button>
+                                {buttonActions.map((value) => (
+                                    <button
+                                        onClick={value.acao}
+                                        key={value.id}
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            padding: "8px 12px",
+                                            backgroundColor: value.background,
+                                            borderRadius: 6,
+                                            cursor: "pointer",
+                                            border: "none",
+                                            marginLeft: 10,
+                                            marginBottom: 8,
+                                        }}
+                                    >
+                                        {value.icon}
+                                        <span style={{ fontWeight: 600, color: "white" }}>{value.title}</span>
+                                        <ArrowRight
+                                            style={{
+                                                marginLeft: 8,
+                                                transform: openFiltro ? "rotate(90deg)" : "rotate(0deg)",
+                                                transition: "0.2s",
+                                            }}
+                                        />
+                                    </button>
+                                ))}
+                            </Box>
 
 
 
-                        {buttonstatus.map((value, index) => (
-                            <button
+                            <Collapse in={openFiltro} timeout="auto" unmountOnExit>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        flexDirection: "row",
+                                        gap: 1,
+                                        width: "100%",
+                                        flexWrap: "wrap",
+                                        backgroundColor: "white",
+                                        p: 1,
+                                        borderRadius: 1,
+                                    }}
+                                >
+                                    {buttonstatus.map((value, index) => (
+                                        <button
+                                            key={index}
+                                            style={{
+                                                backgroundColor: value.background,
+                                                cursor: "pointer",
+                                                maxHeight: 50,
+                                                height: 35,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                borderRadius: 6,
+                                                padding: "0 10px",
+                                                border: "none",
+                                                transition: "transform 0.2s",
+                                            }}
+                                            onClick={value.acao}
+                                            className={style?.isDesktop}
+                                        >
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "space-between",
+                                                    width: "60%",
+                                                }}
+                                            >
+                                                {value.icon}
+                                                <span
+                                                    style={{
+                                                        fontWeight: 600,
+                                                        color: "white",
+                                                        fontSize: 12,
+                                                    }}
+                                                >
+                                                    {value.title}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </Box>
+                            </Collapse>
+                        </Box>
 
-                                key={index}
-                                style={{ backgroundColor: value.background, cursor: "pointer", maxHeight: 50, height: 35, display: "flex", alignItems: "center", }}
-                                onClick={value.acao}
-                                className={style.isDesktop}
-                            >
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "60%" }}>
-                                    {value.icon}
-                                    <span style={{ fontWeight: 600, color: "white", fontSize: 12 }}>{value.title}</span>
-                                </div>
-
-                            </button>
-                        ))}
 
                     </div>
                 }
@@ -426,7 +572,8 @@ useEffect(()=>{
                     errors={errors}
                     submitCadastro={submitCadastro}
                 />
-                <Tabela rows={rows} fetchTodos={fetchTodos} />
+
+                <Tabela rows={rows} fetchTodos={fetchTodos} newRowRef={newRowRef} isCadastrando={isCadastrando} />
             </div>
         </Box>
     )

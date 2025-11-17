@@ -1,39 +1,37 @@
 import React from "react";
-import { Modal, Box, Typography, Button, Backdrop, Grow, useTheme, useMediaQuery} from "@mui/material";
-import { useIsMobile } from "../../hooks/useIsMobile";
-
-
-
+import { Modal, Backdrop, Grow, Box, Typography, Button, useMediaQuery, useTheme } from "@mui/material";
+import { useIsMobile } from "../../hooks/useIsMobile"; // ajusta se necessário
+''
 export const ActionType = {
   Info: "info",
   Success: "success",
   Warning: "warning",
-  Error: "error"
+  Error: "error",
 } as const;
 
-export type ActionType = typeof ActionType[keyof typeof ActionType];
-
-type InfoModalProps = {
+// Tipo derivado a partir do ActionType
+export type ActionTypeType = typeof ActionType[keyof typeof ActionType];
+interface InfoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type?: ActionType;
+  onConfirm?: () => void; // botão de confirmação opcional
+  type?: ActionTypeType;
   title: string;
-  icon: React.ReactElement,
-  message: string;
-};
+  icon: React.ReactElement;
+  message: string | React.ReactNode;
+}
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   info: "#2f86eb",
   success: "#28a745",
   warning: "#ffc107",
   error: "#dc3545",
 };
 
-
-
 export const InfoModal: React.FC<InfoModalProps> = ({
   isOpen,
   onClose,
+  onConfirm,
   type = "info",
   title,
   icon,
@@ -41,20 +39,24 @@ export const InfoModal: React.FC<InfoModalProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const theme = useTheme();
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+
+  const modalWidth = isMobile ? "85%" : isTablet ? "70%" : 600;
+
   return (
     <Modal
       open={isOpen}
-      onClose={onClose}
-      closeAfterTransition
-      BackdropComponent={Backdrop}
-      BackdropProps={{
-        timeout: 300,
+      onClose={(event, reason) => {
+        if (reason === "backdropClick") {
+          onClose();
+        }
       }}
+      BackdropComponent={Backdrop}
+      closeAfterTransition
     >
       <Grow in={isOpen} timeout={350}>
-   <Box
-      sx={{
+        <Box
+           sx={{
         backgroundColor: 'white',
         p: isMobile ? 5 : isTablet ? 4.5 : 4,
         borderRadius: 3,
@@ -75,74 +77,70 @@ export const InfoModal: React.FC<InfoModalProps> = ({
         fontFamily: "'Roboto', sans-serif",
         fontWeight: 700,
       }}
-    >
+        >
+          {/* TÍTULO e ÍCONE */}
           <Typography
             variant="h5"
             sx={{
               color: typeColors[type],
-              textAlign: 'center',
-              fontWeight: 500,
-              letterSpacing: '0.75px',
-              textShadow: '0.5px 0.5px 1px rgba(255, 255, 255, 0.1)',
+              textAlign: "center",
+              fontWeight: 600,
+              letterSpacing: "0.75px",
               mt: 1,
               mb: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
-              {title}
-              {icon}
-            </Box>
-
+            {icon}
+            {title}
           </Typography>
 
-          {/* Mensagem */}
+          {/* MENSAGEM */}
           <Typography
             sx={{
-              mt: 2,
+              mt: 1,
               mb: 3,
-              px: 2, // padding horizontal para evitar que o texto fique muito colado nas bordas
-              maxWidth: "640px", // controla largura máxima do bloco de texto
+              px: 2,
+              maxWidth: "90%",
               textAlign: "center",
-              textShadow: '0.5px 0.5px 1px rgba(255, 255, 255, 0.1)',
-              color: "#5e5e5eff", // contraste levemente mais suave que #333
-              fontSize: isMobile ? "1.05rem" : "1.15rem", // melhora leitura, especialmente em desktop
-              lineHeight: 1.75, // mais espaçamento entre linhas para olhos descansarem
-              letterSpacing: "0.25px", // pequeno ajuste que melhora leitura em blocos de texto
-              fontWeight: 400, // evita que a fonte fique muito leve (especialmente com Montserrat/Inter)
+              color: "#444",
+              fontSize: isMobile ? "1rem" : "1.1rem",
+              lineHeight: 1.6,
+              letterSpacing: "0.25px"
             }}
           >
             {message}
           </Typography>
-          <Button
 
-            onClick={onClose}
-            sx={{
-              backgroundColor: typeColors[type],
-              color: "#000000ff",
-              width:'80%',
-              fontFamily: "monospace",
-              fontWeight: 450,
-              zIndex:2,
-              fontSize: 16,
-              "&:hover": {
-                backgroundColor: "black",
-                fontWeight: 200,
-                color: typeColors[type],
-                filter: "brightness(0.9)",
-              },
-              transition: "all 0.2s ease-in-out",
-              borderRadius: 2,
-              py: 1.5,
+          {/* BOTÕES */}
+          <Box sx={{ display: "flex", gap: 2, width: "80%", justifyContent: "center" }}>
+            {onConfirm && (
+              <Button
+                onClick={onConfirm}
+                sx={{
+                  backgroundColor: typeColors[type],
+                  color: "#fff",
+                  width: "45%",
+                  fontWeight: 600,
+                  fontSize: 16,
+                  "&:hover": {
+                    backgroundColor: "#000",
+                    color: typeColors[type],
+                  },
+                  borderRadius: 2,
+                  py: 1.5,
+                  transition: "all 0.2s ease-in-out",
+                }}
+              >
+                Confirmar
+              </Button>
+            )}
 
-            }}>
-            Compreendo
-          </Button>
+
+          </Box>
         </Box>
       </Grow>
     </Modal>

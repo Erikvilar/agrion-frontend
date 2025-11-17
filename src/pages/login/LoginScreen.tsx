@@ -10,9 +10,10 @@ import { useIsMobile } from "../../hooks/useIsMobile"
 import { useNavigate } from "react-router"
 import type UserDTO from "../../model/UserDTO"
 import ApiServices from "../../services/api-service"
-import { InfoModal } from "../../components/modal-informativo/Component"
+
 import { ActionType } from "../../components/modal-informativo/Component"
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { useNotification } from "../../hooks/useNotification"
 
 
 export type InfoState = {
@@ -23,12 +24,9 @@ export type InfoState = {
 };
 
 export const LoginScreen = () => {
-    const [open, setOpen] = useState(false);
+ 
 
-    const [info, setInfo] = useState<InfoState>({
-        type: undefined, title: "", message: "", icon: <></>
-
-    });
+    const { showNotification, NotificationModal } = useNotification();
 
     const navigation = useNavigate()
 
@@ -57,24 +55,28 @@ export const LoginScreen = () => {
     };
     const isLoginValid = () => {
         if (user.login === "") {
-            setOpen(true);
-            setInfo({
-                type: ActionType.Warning,
-                icon: <WarningAmberRoundedIcon sx={{ fontSize: 48, color: '#f9a825', mb: 2 }} />,
-                title: "Login não informado",
-                message: "Por favor, preencha o campo de login para continuar."
-            });
+        
+            showNotification(
+                ActionType.Warning,
+                "Login invalido",
+                "",
+                () => {
+                    console.log("modal fehcado")
+                }
+            );
             return false;
         }
 
         if (user.password === "") {
-            setOpen(true);
-            setInfo({
-                type: ActionType.Warning,
-                title: "Senha não informada",
-                icon: <></>,
-                message: "É necessário informar sua senha para prosseguir com o acesso."
-            });
+ 
+            showNotification(
+                ActionType.Warning,
+                "Senha não informada",
+                "",
+                () => {
+
+                }
+            );
             return false;
         }
         return true;
@@ -89,19 +91,34 @@ export const LoginScreen = () => {
                 const { status, success, data, message } = await ApiServices.login(user)
                 console.log(status, success, data)
                 if (success) {
-                    
-                
+
+
                     localStorage.setItem("token", data.token);
                     localStorage.setItem("user", data.fullName)
                     localStorage.setItem("avatar", data.avatar);
                     navigation("/lista_espera")
                 }
-                setOpen(true)
-                setInfo({ type: ActionType.Warning, icon: <></>, title: `${message}`, message: `${message}` })
+
+                showNotification(
+                    ActionType.Warning,
+                    `${message}`,
+                    "",
+                    () => {
+                        console.log("modal fehcado")
+                    }
+                )
             } catch (error) {
                 console.log(error)
-                setOpen(true)
-                setInfo({ type: ActionType.Info, icon: <></>, title: "", message: "Não e permitido login nulo" })
+
+                showNotification(
+                    ActionType.Warning,
+                    `"Não e permitido login nulo`,
+                    "",
+                    () => {
+                        console.log("modal fehcado")
+                    }
+                )
+
                 loaderRef.current?.done()
             } finally {
                 loaderRef.current?.done()
@@ -143,7 +160,7 @@ export const LoginScreen = () => {
 
         <Box
             sx={{
-              
+
                 width: {
                     xs: '100%',    // telas pequenas (mobile) o Box usa 100% da largura do container
                     sm: 'auto',    // telas maiores o width é automático (não fixo)
@@ -153,69 +170,57 @@ export const LoginScreen = () => {
                     sm: '80%',     // no desktop pode ocupar até 80% da largura do pai (ou outro valor que desejar)
                     md: 500,       // em telas maiores, limite máximo de 800px
                 },
-                height:{
+                height: {
                     xs: 500,       // no mobile, máximo 500px
                     sm: '80%',     // no desktop pode ocupar até 80% da largura do pai (ou outro valor que desejar)
-                    md: 800, 
+                    md: 800,
                 },
-               
+
                 mx: 'auto',     // centraliza horizontalmente
-                display:"flex",
-                flexDirection:"column",
-                alignItems:"center",
-                justifyContent:"center"
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center"
             }}
         >
-            <InfoModal
-                isOpen={open}
-                onClose={() => setOpen(false)}
-                type={info.type}
-                title={info.title}
-                icon={info.icon}
-                message={info.message}
-            />
+            <LoadingIndicator ref={loaderRef} />
+            <img src="src\assets\logo\logo.jpg" alt="" width={390} />
 
+            {NotificationModal}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+                <Container isElement={false}>
+                    <FormGroup
+                        sx={{
+                            width: '100%',
+                            maxWidth: isMobile ? 260 : 450, // controle da largura no container
+                            mx: 'auto',                     // centraliza horizontalmente
+                            mt: 2,
+                        }}
+                    >
+                        <FormControl sx={{ mb: 2 }}>
+                            <TextField
+                                id="my-input"
+                                placeholder="LOGIN"
+                                name="login"
+                                onChange={handleLogin}
+                                sx={{ ...fieldStyle, ...focused }}
+                                variant="outlined"
+                            />
+                        </FormControl>
 
-            <LoadingIndicator
-                ref={loaderRef}
-                image="https://www.datagroconferences.com/wp-content/uploads/2021/06/Agrionfertilizantes_site-1.png"
-
-            />
-            <img src="https://d1xeoqaoqyzc9p.cloudfront.net/app/uploads/2024/08/Agrionfertilizantes_logo.png" alt="" width={300} />
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column"}}>
-            <Container isElement={false}>
-                <FormGroup
-                    sx={{
-                        width: '100%',
-                        maxWidth: isMobile ? 260 : 450, // controle da largura no container
-                        mx: 'auto',                     // centraliza horizontalmente
-                        mt: 2,
-                    }}
-                >
-                    <FormControl sx={{ mb: 2 }}>
-                        <TextField
-                            id="my-input"
-                            placeholder="LOGIN"
-                            name="login"
-                            onChange={handleLogin}
-                            sx={{ ...fieldStyle, ...focused }}
-                            variant="outlined"
-                        />
-                    </FormControl>
-
-                    <FormControl sx={{ mb: 2 }}>
-                        <TextField
-                            id="my-password"
-                            placeholder="SENHA"
-                            name="password"
-                            onChange={handleLogin}
-                            type="password"
-                            sx={{ ...fieldStyle, ...focused }}
-                            variant="outlined"
-                        />
-                    </FormControl>
-                </FormGroup>
-            </Container>
+                        <FormControl sx={{ mb: 2 }}>
+                            <TextField
+                                id="my-password"
+                                placeholder="SENHA"
+                                name="password"
+                                onChange={handleLogin}
+                                type="password"
+                                sx={{ ...fieldStyle, ...focused }}
+                                variant="outlined"
+                            />
+                        </FormControl>
+                    </FormGroup>
+                </Container>
 
                 <Button sx={{
                     width: isMobile ? 180 : 400, height: 48,
@@ -225,12 +230,12 @@ export const LoginScreen = () => {
                         filter: "brightness(0.9)",
                     },
                     fontWeight: 200,
-                    backgroundColor: green[500], 
+                    backgroundColor: green[500],
                     marginBottom: 2
                 }}
                     variant="contained"
                     onClick={submitLogin}>Fazer Login</Button>
-      
+
 
             </div>
         </Box>
