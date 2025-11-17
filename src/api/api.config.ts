@@ -1,6 +1,6 @@
 
 
-const env: string = "local";
+const env: string = "prod";
 
 interface ApiConfig {
   BASE_URL: string;
