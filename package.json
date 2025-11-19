@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vite --host",
-    "build": "tsc --noEmitOnError && vite build",
+    "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
