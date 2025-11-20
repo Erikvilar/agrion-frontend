@@ -1,10 +1,8 @@
 
 import {
-    Accordion,
-    AccordionSummary,
-    AccordionDetails, Box, CircularProgress, IconButton, InputAdornment, TextField,
-    Typography,
-    Collapse
+
+  Box, CircularProgress, IconButton, InputAdornment, TextField,Collapse,
+  type SelectChangeEvent
 } from "@mui/material";
 
 import CachedIcon from "@mui/icons-material/Cached";
@@ -46,7 +44,6 @@ import { enviarNotificacao } from "../../utils/enviarNotificacao";
 
 
 import ModalHelper from "../../components/modal-help/ModalHelper";
-import { ActionType } from "../../components/modal-informativo/Component";
 
 
 
@@ -82,7 +79,6 @@ interface ListaEsperaProps {
 }
 
 
-const TIMEREFRESH = 60000;
 
 const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
@@ -108,7 +104,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const [isRefreshing, setIsRefreshing] = useState(false);
 
-    const [activeFilter, setActiveFilter] = useState<{ type: 'all' | 'status' | 'search', value: any }>({ type: 'all', value: null });
+
     const newRowRef = useRef<HTMLTableRowElement | null>(null);
     const [cadastro, SetCadastro] = useState<CadastroDTO>({
         nomeMotorista: "",
@@ -150,7 +146,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
         const { success, data } = await ApiServices.buscarTodos();
         if (success && data) {
             const novaRows = data.map((item: CadastroDTO) =>
-                createData(item.codigoCadastro, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
+                createData(item.codigoCadastro!, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
             setRows(novaRows);
         } else {
@@ -169,7 +165,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
         if (response.success && response.data) {
             const novaRows = response.data.map((item: CadastroDTO) =>
-  createData(item.codigoCadastro, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
+  createData(item.codigoCadastro!, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
 
 
@@ -261,7 +257,6 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
             codigo: null,
             background: "#1976D2", // Azul padrão UX
             acao: () => {
-                setActiveFilter({ type: 'all', value: null });
                 fetchTodos(false);
 
             },
@@ -335,11 +330,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                 newRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
             }, 100);
         } else {
-            setInfo({
-                type: ActionType.Error,
-                title: "Usuário não informado",
-                message: "Estamos com um problema para capturar seu usuario, faça login novamente"
-            });
+    
         }
 
 
@@ -348,40 +339,26 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     };
 
 
-    const [errors, setErrors] = useState({
-        cpf: false,
-        pesoVazio: false,
-    });
+ const errors = {};
 
-    const handleCadastro = (e: any) => {
+const handleCadastro = (
+  e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent
+) => {
+  const { name, value } = e.target;
 
-        const { name, value } = e.target;
-
-        let newValue = value
-
-
-        SetCadastro((prev) => ({
-            ...prev,
-            [name]: newValue
-        }))
-
-    }
+  SetCadastro((prev) => ({
+    ...prev,
+    [name]: value
+  }));
+};
 
     const submitCadastro = async () => {
         if (cadastro.telefone == null) {
 
-            setInfo({
-                type: ActionType.Warning,
-                title: "Por favor informar um telefone valido",
-                message: "Informe um telefone valido abaixo."
-            });
+      
         } else if (cadastro.cpf == null) {
 
-            setInfo({
-                type: ActionType.Warning,
-                title: "Por favor informar CPF válido",
-                message: "Informe um CPF válido para prosseguir"
-            });
+        
         }
 
         else {

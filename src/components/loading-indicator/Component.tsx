@@ -3,7 +3,6 @@ import {
     useState,
     useImperativeHandle,
     forwardRef,
-    type Ref,
     type CSSProperties
 } from "react";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -12,56 +11,58 @@ export interface LoadingIndicatorRef {
     done: () => void;
 }
 
-interface LoadingIndicatorProps {
-    image?: string;
-}
 
-const LoadingIndicator = forwardRef(
-    (props: LoadingIndicatorProps, ref: Ref<LoadingIndicatorRef>) => {
-        const [visible, setVisible] = useState(false);
-        const isMobile = useIsMobile();
-        useImperativeHandle(ref, () => ({
-            start() {
-                setVisible(true);
-            },
-            done() {
-                setVisible(false);
-            }
-        }));
+const LoadingIndicator = forwardRef<LoadingIndicatorRef, {}>((props, ref) => {
+    const [visible, setVisible] = useState(false);
+    const isMobile = useIsMobile();
+    const {} = props;
+    useImperativeHandle(ref, () => ({
+        start() {
+            setVisible(true);
+        },
+        done() {
+            setVisible(false);
+        }
+    }));
 
-        return (
-            <Box>
-                {visible && <Box sx={styles.background} />}
-                <div
+    return (
+        <Box>
+            {visible && <Box sx={styles.background} />}
+            <div
+                style={{
+                    ...styles.overlay,
+                    transform: visible ? "translateY(0)" : "translateY(-120px)",
+                    opacity: visible ? 1 : 0,
+                    position: "fixed",
+                    top: "35%",
+                    left: isMobile ? "28%" : "45%"
+                }}
+            >
+                <div style={styles.loaderWrapper}>
+                    <div style={styles.spinner}></div>
+                    <img
+                        src="https://www.datagroconferences.com/wp-content/uploads/2021/06/Agrionfertilizantes_site-1.png"
+                        alt="logo"
+                        style={styles.image}
+                    />
+                </div>
+                <span
                     style={{
-                        ...styles.overlay,
-                        transform: visible ? "translateY(0)" : "translateY(-120px)",
-                        opacity: visible ? 1 : 0,
-                        position: "fixed",
-                        top: "35%",
-                        left: isMobile ? "28%" : "45%",
-
-
+                        color: "white",
+                        fontSize: 28,
+                        fontWeight: 200,
+                        position: "absolute",
+                        top: 190,
+                        left: 28,
+                        fontFamily: "Roboto"
                     }}
                 >
-                    <div style={styles.loaderWrapper}>
-                        <div style={styles.spinner}></div>
-                        <img
-                            src="https://www.datagroconferences.com/wp-content/uploads/2021/06/Agrionfertilizantes_site-1.png"
-                            alt="logo"
-                            style={styles.image}
-                        />
-
-                    </div>
-                    <span style={{
-                        color: "white", fontSize: 28, fontWeight:200, position: "absolute", top:  190, left: 28, fontFamily:"Roboto"
-                    }}>Aguarde ...</span>
-                </div>
-
-            </Box>
-        );
-    }
-);
+                    Aguarde ...
+                </span>
+            </div>
+        </Box>
+    );
+});
 
 
 const styles: Record<string, CSSProperties> = {

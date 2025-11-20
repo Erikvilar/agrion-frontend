@@ -82,7 +82,7 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
 
       },
     }
-    const operacao = row.operacao;
+
 
     const dataCriacaoFormatada = row.dataCriacao ? format(new Date(row.dataCriacao), "dd/MM/yyyy HH:mm", { locale: ptBR }) : "-";
     return (
@@ -486,7 +486,7 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
     );
   });
 
-const Tabela = ({ rows, fetchTodos, isCadastrando, newRowRef }: TabelaProps) => {
+const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
 
 
   const isMobile = useIsMobile();

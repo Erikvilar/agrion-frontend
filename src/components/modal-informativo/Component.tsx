@@ -41,12 +41,11 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   const theme = useTheme();
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
-  const modalWidth = isMobile ? "85%" : isTablet ? "70%" : 600;
 
   return (
     <Modal
       open={isOpen}
-      onClose={(event, reason) => {
+      onClose={(reason) => {
         if (reason === "backdropClick") {
           onClose();
         }

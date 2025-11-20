@@ -1,4 +1,4 @@
-import React from "react";
+
 import Drawer, { type DrawerProps } from "@mui/material/Drawer";
 import {
   Box,
@@ -9,6 +9,7 @@ import {
   Divider,
   Select,
   MenuItem,
+
 } from "@mui/material";
 import { green, grey } from "@mui/material/colors";
 import type CadastroDTO from "../../model/CadastroDTO";
@@ -35,7 +36,7 @@ interface LateralFormDrawerProps extends Omit<DrawerProps, "children"> {
   open: boolean;
   onClose: () => void;
   cadastro: CadastroDTO;
-  handleCadastro: (e: React.ChangeEvent<HTMLInputElement>) => void;
+handleCadastro: (e: any) => void; 
   errors: Errors;
   submitCadastro: () => void;
 }

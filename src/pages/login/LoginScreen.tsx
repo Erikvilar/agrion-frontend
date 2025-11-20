@@ -12,7 +12,6 @@ import type UserDTO from "../../model/UserDTO"
 import ApiServices from "../../services/api-service"
 
 import { ActionType } from "../../components/modal-informativo/Component"
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { useNotification } from "../../hooks/useNotification"
 
 
@@ -184,7 +183,7 @@ export const LoginScreen = () => {
             }}
         >
             <LoadingIndicator ref={loaderRef} />
-            <img src="src\assets\logo\logo.jpg" alt="" width={390} />
+            <img src="https://raw.githubusercontent.com/Erikvilar/agrion-frontend/8acaca29d68feb84f7417b9ae811da2ed210876f/src/assets/logo/logo.jpg?token=GHSAT0AAAAAADLZBBHLQCLGEM7PPOSAM6N22I7GZOA" alt="" width={400} />
 
             {NotificationModal}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
