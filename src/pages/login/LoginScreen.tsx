@@ -183,7 +183,7 @@ export const LoginScreen = () => {
             }}
         >
             <LoadingIndicator ref={loaderRef} />
-            <img src="https://raw.githubusercontent.com/Erikvilar/agrion-frontend/8acaca29d68feb84f7417b9ae811da2ed210876f/src/assets/logo/logo.jpg?token=GHSAT0AAAAAADLZBBHLQCLGEM7PPOSAM6N22I7GZOA" alt="" width={400} />
+            <img src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logo.jpg?raw=true" alt="" width={400} />
 
             {NotificationModal}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
