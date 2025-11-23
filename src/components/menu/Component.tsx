@@ -23,7 +23,7 @@ type MenuLeftProps = {
  handleLogout:()=> void;
 };
 
-export default function MenuLeft({ avatar,isPageLogin,setIsOpen,handleLogout}: MenuLeftProps) {
+export default function MenuLeft({ isPageLogin,setIsOpen,handleLogout}: MenuLeftProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigation = useNavigate();
   const open = Boolean(anchorEl);
@@ -35,6 +35,7 @@ const login = localStorage.getItem("token")
   const handleClose = () => {
     setAnchorEl(null);
   };
+  
 
   const handleCadastro = () => {
    setIsOpen(true)
