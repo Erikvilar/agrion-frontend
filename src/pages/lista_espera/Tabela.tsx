@@ -4,7 +4,7 @@ import Constants from "../../constants/Constants";
 import { notificationService } from "../../services/notification-service";
 import { TempoDeEspera } from "../../utils/TempoEspera";
 import ApiServices from "../../services/api-service";
-import React, { forwardRef, useCallback, useEffect, useState } from "react";
+import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { enviarNotificacao } from "../../utils/enviarNotificacao";
 import type CadastroDTO from "../../model/CadastroDTO";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 
 import { useNotification } from "../../hooks/useNotification";
 import SavingIndicator from "../../components/savingIndicator/SavingIndicator";
+import type { LoadingIndicatorRef } from "../../components/loading-indicator/Component";
 
 
 interface TabelaProps {
@@ -410,67 +411,67 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
             </TableCell>
 
 
-       <TableCell align="center">
-  <FormControl
-    variant="standard"
-    sx={{
-      minWidth: 120,
-      "& .MuiInput-underline:before, & .MuiInput-underline:after": {
-        borderBottom: "none",
-      },
-    }}
-  >
-    <Select
-      value={row.operacao || ""}
-      onChange={(e) =>
-        onInputChange(row.codigoCadastro!, "operacao", e.target.value)
-      }
-      onBlur={() => salvarLinha(updatedRow)}
-      displayEmpty
-      renderValue={(selected) => {
-        if (!selected) return <span>Selecione</span>;
+            <TableCell align="center">
+              <FormControl
+                variant="standard"
+                sx={{
+                  minWidth: 120,
+                  "& .MuiInput-underline:before, & .MuiInput-underline:after": {
+                    borderBottom: "none",
+                  },
+                }}
+              >
+                <Select
+                  value={row.operacao || ""}
+                  onChange={(e) =>
+                    onInputChange(row.codigoCadastro!, "operacao", e.target.value)
+                  }
+                  onBlur={() => salvarLinha(updatedRow)}
+                  displayEmpty
+                  renderValue={(selected) => {
+                    if (!selected) return <span>Selecione</span>;
 
-        const statusColors: Record<
-          string,
-          { bg: string; border: string; text: string }
-        > = {
-          CARREGAMENTO: { bg: "#FFF3CD", border: "#FFB300", text: "#B26A00" },
-          DESCARREGAMENTO: { bg: "#E3F2FD", border: "#1565C0", text: "#0D47A1" },
-          "": { bg: "#F0F0F0", border: "#C0C0C0", text: "#808080" },
-        };
+                    const statusColors: Record<
+                      string,
+                      { bg: string; border: string; text: string }
+                    > = {
+                      CARREGAMENTO: { bg: "#FFF3CD", border: "#FFB300", text: "#B26A00" },
+                      DESCARREGAMENTO: { bg: "#E3F2FD", border: "#1565C0", text: "#0D47A1" },
+                      "": { bg: "#F0F0F0", border: "#C0C0C0", text: "#808080" },
+                    };
 
-        const colors = statusColors[selected] || statusColors[""];
+                    const colors = statusColors[selected] || statusColors[""];
 
-        return (
-          <Chip
-            label={selected}
-            variant="outlined"
-            sx={{
-              backgroundColor: colors.bg,
-              borderColor: colors.border,
-              color: colors.text,
-              fontWeight: 600,
-              height: 26,
-            }}
-          />
-        );
-      }}
-      sx={{
-        "& .MuiSelect-select": {
-          display: "flex",
-          alignItems: "center",
-          paddingY: 0.5,
-        },
-      }}
-    >
-      <MenuItem value="">
-        <em>Selecione</em>
-      </MenuItem>
-      <MenuItem value="CARREGAMENTO">CARREGAMENTO</MenuItem>
-      <MenuItem value="DESCARREGAMENTO">DESCARREGAMENTO</MenuItem>
-    </Select>
-  </FormControl>
-</TableCell>
+                    return (
+                      <Chip
+                        label={selected}
+                        variant="outlined"
+                        sx={{
+                          backgroundColor: colors.bg,
+                          borderColor: colors.border,
+                          color: colors.text,
+                          fontWeight: 600,
+                          height: 26,
+                        }}
+                      />
+                    );
+                  }}
+                  sx={{
+                    "& .MuiSelect-select": {
+                      display: "flex",
+                      alignItems: "center",
+                      paddingY: 0.5,
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Selecione</em>
+                  </MenuItem>
+                  <MenuItem value="CARREGAMENTO">CARREGAMENTO</MenuItem>
+                  <MenuItem value="DESCARREGAMENTO">DESCARREGAMENTO</MenuItem>
+                </Select>
+              </FormControl>
+            </TableCell>
 
 
             <TableCell align="center">
@@ -520,14 +521,15 @@ const Tabela = ({ rows, fetchTodos, newRowRef }: TabelaProps) => {
   const isMobile = useIsMobile();
   const [tableRows, setTableRows] = useState<CadastroDTO[]>(rows);
   const [updatedRow, setUpdatedRow] = useState<CadastroDTO>(rows[0]);
+  const savingRef = useRef<LoadingIndicatorRef>(null)
 
-  const [saving, setSaving] = useState(false);
 
   const { showNotification, NotificationModal } = useNotification();
 
   useEffect(() => {
+  
     setTableRows([...rows]);
-    setSaving(false)
+    console.log(tableRows)
   }, [rows]);
 
   const [expanded, setExpanded] = useState<number | false>(false);
@@ -535,7 +537,6 @@ const Tabela = ({ rows, fetchTodos, newRowRef }: TabelaProps) => {
     setExpanded(isExpanded ? panelId : false);
   };
 
-  console.log(tableRows)
 
   const handleMudarStatus = useCallback(
     async (row: CadastroDTO) => {
@@ -613,35 +614,50 @@ const Tabela = ({ rows, fetchTodos, newRowRef }: TabelaProps) => {
 
   const onInputChange = useCallback(
     (codigoCadastro: number, campo: keyof CadastroDTO, valor: string | number) => {
-      setTableRows((prevRows) => {
-        setSaving(true)
-        const index = prevRows.findIndex((row) => row.codigoCadastro === codigoCadastro);
+  savingRef.current?.start()
 
+      setTableRows((prevRows) => {
+
+        const index = prevRows.findIndex((row) => row.codigoCadastro === codigoCadastro);
         if (index === -1) return prevRows;
         const updated = ({ ...prevRows[index], [campo]: valor })
         const newRows = [...prevRows];
+
         newRows[index] = updated;
         setUpdatedRow(updated)
+
         return newRows;
       });
+
     },
     []
   );
 
   const salvarLinha = async (updatedRow: CadastroDTO) => {
+       
     if (updatedRow.status === "SALVAR") return
 
-    await ApiServices.cadastrar(updatedRow);
-    setSaving(false)
+    const { success } = await ApiServices.cadastrar(updatedRow);
+  
+  savingRef.current?.done()
+    if( success ){
+  
+    
+    }
     console.log(updatedRow)
     fetchTodos();
 
   }
 
   const salvarCadastro = async (updatedRow: CadastroDTO) => {
-    await ApiServices.cadastrar(updatedRow);
-    setSaving(false)
-    fetchTodos();
+ 
+    const { success } = await ApiServices.cadastrar(updatedRow);
+
+    if (success) {
+ 
+      fetchTodos();
+    }
+
 
   }
 
@@ -697,7 +713,7 @@ const Tabela = ({ rows, fetchTodos, newRowRef }: TabelaProps) => {
         scrollBehavior: "smooth",
       }}
     >
-      <SavingIndicator saving={saving} />
+      <SavingIndicator ref={savingRef} />
       {NotificationModal}
       <Table stickyHeader aria-label="sticky table">
         <TableHead style={{ backgroundColor: "#363636f" }}>

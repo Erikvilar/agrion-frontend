@@ -1,8 +1,8 @@
 
 import {
 
-  Box, CircularProgress, IconButton, InputAdornment, TextField,Collapse,
-  type SelectChangeEvent
+    Box, CircularProgress, IconButton, InputAdornment, TextField, Collapse,
+    type SelectChangeEvent
 } from "@mui/material";
 
 import CachedIcon from "@mui/icons-material/Cached";
@@ -44,6 +44,8 @@ import { enviarNotificacao } from "../../utils/enviarNotificacao";
 
 
 import ModalHelper from "../../components/modal-help/ModalHelper";
+import type { LoadingIndicatorRef } from "../../components/loading-indicator/Component";
+import LoadingIndicator from "../../components/loading-indicator/Component";
 
 
 
@@ -56,20 +58,20 @@ function createData(
     placa: string,
     marca: string,
     modelo: string,
-    tipoProduto:string,
-    produto:string,
-    operacao:string,
+    tipoProduto: string,
+    produto: string,
+    operacao: string,
     pesoVazio: number,
     pesoCarregado: number | undefined,
     vigia: string,
-    
+
     numeroOrdem: number,
     status: string,
     dataCriacao?: string | Date
 
 ) {
     return {
-        codigoCadastro, nomeMotorista, telefone, cpf, corVeiculo, placa, marca, modelo, tipoProduto,produto,operacao,pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
+        codigoCadastro, nomeMotorista, telefone, cpf, corVeiculo, placa, marca, modelo, tipoProduto, produto, operacao, pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
     };
 }
 
@@ -84,10 +86,10 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const isMobile = useIsMobile();
     const [openFiltro, setOpenFiltro] = useState(false);
-
+    const loaderRef = useRef<LoadingIndicatorRef>(null);
     const [isCadastrando, setIsCadastrando] = useState(false)
 
-  
+
 
 
 
@@ -116,8 +118,8 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
         pesoVazio: 0,
         modelo: "",
         vigia: "",
-        tipoProduto:"",
-        produto:"",
+        tipoProduto: "",
+        produto: "",
         operacao: "",
         numeroOrdem: 0,
         status: "",
@@ -141,7 +143,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     };
 
     const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
-
+    
         if (isBackgroundFetching) setIsRefreshing(true)
         const { success, data } = await ApiServices.buscarTodos();
         if (success && data) {
@@ -155,8 +157,9 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
         }
         if (isBackgroundFetching) setIsRefreshing(false)
-    }, []);
 
+    }, []);
+   
     const buscarPorStatus = useCallback(async (codigo: number, isBackgroundFetch = false) => {
 
         if (isBackgroundFetch) setIsRefreshing(true);
@@ -165,7 +168,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
         if (response.success && response.data) {
             const novaRows = response.data.map((item: CadastroDTO) =>
-  createData(item.codigoCadastro!, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
+                createData(item.codigoCadastro!, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
 
 
@@ -179,8 +182,9 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     }, []);
 
     useEffect(() => {
-
+  loaderRef.current?.start()
         fetchTodos()
+  loaderRef.current?.done()
     }, [setIsModalOpen, isModalOpen])
 
     const buttonstatus = [
@@ -282,9 +286,9 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
             icon: <AddCircleIcon sx={{ color: "#FFFFFF" }} />
         },
         {
-             id: "3",
-            background: "#238681ff", 
-            icon:   <ModalHelper />
+            id: "3",
+            background: "#238681ff",
+            icon: <ModalHelper />
         }
     ];
 
@@ -303,6 +307,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     const handleClose = () => setIsModalOpen(false)
 
     const adicionarLinhaEmBranco = async () => {
+        loaderRef.current?.done()
         await fetchTodos()
         const user = localStorage.getItem("user")
         if (user) {
@@ -330,7 +335,7 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                 newRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
             }, 100);
         } else {
-    
+
         }
 
 
@@ -339,26 +344,26 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     };
 
 
- const errors = {};
+    const errors = {};
 
-const handleCadastro = (
-  e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent
-) => {
-  const { name, value } = e.target;
+    const handleCadastro = (
+        e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent
+    ) => {
+        const { name, value } = e.target;
 
-  SetCadastro((prev) => ({
-    ...prev,
-    [name]: value
-  }));
-};
+        SetCadastro((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
     const submitCadastro = async () => {
         if (cadastro.telefone == null) {
 
-      
+
         } else if (cadastro.cpf == null) {
 
-        
+
         }
 
         else {
@@ -383,13 +388,13 @@ const handleCadastro = (
                 width: "100%",
             }}
         >
-
+            <LoadingIndicator ref={loaderRef} />
             <div>
 
                 <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? 'center' : 'start', marginLeft: isMobile ? 0 : 20, paddingTop: isMobile ? 0 : 100, marginBottom: 4 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: '50%' }}>
                         <h2 style={{ marginBottom: 10 }}>DASHBOARD GERENCIAL</h2>
-                     
+
                     </div>
 
 

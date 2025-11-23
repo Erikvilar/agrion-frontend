@@ -13,7 +13,8 @@ import type UserDTO from "../model/UserDTO";
 import { useNotification } from "../hooks/useNotification";
 import { ActionType } from "../components/modal-informativo/Component";
 import SuportePage from "../pages/contato_suporte/SuportePage";
-
+import HistoryIcon from "@mui/icons-material/History";
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 
 const RouterSwitch = () => {
 
@@ -56,14 +57,13 @@ const RouterSwitch = () => {
     const condicionalRender = (path: string) => {
         switch (path) {
             case "/lista_espera":
-                return <ButtonDefault className={styles.buttonDefault} route={-1} children={(<li><ArrowBackIosNewIcon sx={{ fontSize: 18, marginRight: 1 }} /> Voltar</li>)} />
+                return <div>
+                    <ButtonDefault className={styles.buttonDefault} route={-1} children={(<li><ArrowBackIosNewIcon sx={{ fontSize: 18, marginRight: 1 }} /> Voltar a home</li>)} />
+                     <ButtonDefault className={styles.buttonDefault} route={"/historico"} children={(<li><HistoryIcon sx={{ fontSize: 18, marginRight: 1 }} /> Consultar histórico</li>)} />
+                     <ButtonDefault className={styles.buttonDefault} route={"/suporte"} children={(<li><SupportAgentOutlinedIcon sx={{ fontSize: 18, marginRight: 1 }} /> Contatar suporte</li>)} />
+                </div>
             case "/":
-                return (
-                    <>
-                        <ButtonDefault className={styles.buttonDefault} route="/lista_espera" children={(<li>Lista de espera</li>)} />
-                        <ButtonDefault className={styles.buttonDefault} route="/historico" children={(<li>Histórico</li>)} />
-                    </>
-                )
+               return <></>
             default:
                 return <ButtonDefault className={styles.buttonDefault} route={-1} children={(<li><ArrowBackIosNewIcon sx={{ fontSize: 18, marginRight: 1 }} /> Voltar</li>)} />
         }
@@ -77,7 +77,7 @@ const RouterSwitch = () => {
 
         }
         console.log(logoutPlain)
-        const { status, success, data, message } = await ApiServices.logout(logoutPlain)
+        const { status, success, data, } = await ApiServices.logout(logoutPlain)
         console.log(status, success, data)
         if (success) {
             localStorage.setItem("token", "");

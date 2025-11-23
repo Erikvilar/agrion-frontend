@@ -67,7 +67,7 @@
     cursor: pointer;
     transition: 800ms;
     &:hover{
-        transform: scale(1.1);
+        transform: scale(1.02);
         border-bottom: 2px solid rgb(15, 92, 0);
     }
 }
@@ -96,6 +96,7 @@
     border: 0px;
     outline: none;
     cursor: pointer;
+    margin-right: 10px;
     text-align: center;
     height: 50px;
     background-color: transparent;

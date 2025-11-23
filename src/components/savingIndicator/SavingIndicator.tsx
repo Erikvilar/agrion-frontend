@@ -1,28 +1,21 @@
-import React, { useEffect, useState } from "react";
+import  { forwardRef,  useImperativeHandle, useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import type { LoadingIndicatorRef } from "../loading-indicator/Component";
 
-interface SavingIndicatorProps {
-  saving: boolean; 
-}
 
-const SavingIndicator: React.FC<SavingIndicatorProps> = ({ saving }) => {
+const SavingIndicator = forwardRef<LoadingIndicatorRef, {}>((props, ref) => {
   const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-let timeout: number;
-
-    if (saving) {
-      // mostra imediatamente
-      setVisible(true);
-    } else {
-      // mantém visível por +500ms
-      timeout = setTimeout(() => setVisible(false), 500);
-    }
-
-    return () => clearTimeout(timeout);
-  }, [saving]);
+    const {} = props;
+    useImperativeHandle(ref, () => ({
+        start() {
+            setVisible(true);
+        },
+        done() {
+            setVisible(false);
+        }
+    }));
 
   if (!visible) return null;
 
@@ -45,6 +38,6 @@ let timeout: number;
       <Typography sx={{color:"black"}} variant="body2">Salvando...</Typography>
     </Box>
   );
-};
+});
 
 export default SavingIndicator;
