@@ -92,7 +92,7 @@ const login = localStorage.getItem("token")
         </IconButton>
       </motion.div>
 
-      {/* Avatar com animação suave */}
+      {/* Avatar com animação suave
       <motion.div
         whileHover={{ scale: 1.15 }}
         transition={{ type: "spring", stiffness: 300 }}
@@ -109,7 +109,7 @@ const login = localStorage.getItem("token")
             }}
           />
         </Box>
-      </motion.div>
+      </motion.div> */}
 
       {/* Menu flutuante */}
       <AnimatePresence>
