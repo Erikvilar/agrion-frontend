@@ -35,5 +35,5 @@ export const TempoDeEspera = ({ dataCriacao }: TempoDeEsperaProps) => {
 
   if (!dataCriacao) return null;
 
-  return <div>{tempoExibido}</div>;
+  return <div> Há: {tempoExibido}</div>;
 };

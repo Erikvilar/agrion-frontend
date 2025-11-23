@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { useNotification } from "../../hooks/useNotification";
+import SavingIndicator from "../../components/savingIndicator/SavingIndicator";
 
 
 interface TabelaProps {
@@ -131,10 +132,7 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
                     textTransform: "capitalize",
                   }}
                 >
-                  {index + 1}º - {row.nomeMotorista}
-                </Typography>
-                <Typography color="white" sx={{ fontSize: 12, opacity: 0.9 }}>
-                  {row.marca} • {row.modelo}
+                  {index + 1}º - {row.nomeMotorista} - ("produto") {row.produto}
                 </Typography>
               </Box>
             </AccordionSummary>
@@ -143,11 +141,12 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
             <AccordionDetails
               sx={{
                 backgroundColor: "#fafafa",
-                px: 2,
+                px: 3,
                 py: 1.5,
                 display: "flex",
                 flexDirection: "column",
                 gap: 1,
+
               }}
             >
 
@@ -166,14 +165,21 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
 
 
                 <Typography variant="body2">
-                  <strong>Placa:</strong> {row.placa || "-"}
+                  <strong>Placa:</strong> {row.placa || "Não informado"}
                 </Typography>
-                <Typography variant="body2">
-                  <strong>Código:</strong> {row.codigoCadastro ?? "-"}
-                </Typography>
+
               </Box>
 
               {/* Linha 2: Marca + Modelo */}
+
+              <Typography variant="body2">
+                <strong>Marca:</strong> {row.marca || "Não informado"}
+              </Typography>
+
+
+              <Typography variant="body2">
+                <strong>Modelo:</strong> {row.modelo || "Não informado"}
+              </Typography>
               <Box
                 sx={{
                   display: "flex",
@@ -181,15 +187,19 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
                   flexWrap: "wrap",
                 }}
               >
-                <Typography variant="body2">
-                  <strong>Marca:</strong> {row.marca || "-"}
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Modelo:</strong> {row.modelo || "-"}
-                </Typography>
+
               </Box>
+              <Divider sx={{ my: 1 }} />
+              <Typography variant="body2">
+                <strong>Produto:</strong> {row.produto || "-"}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Tipo:</strong> {row.tipoProduto || "-"}
+              </Typography>
 
-              {/* Linha 3: Motorista + Data */}
+              <Typography variant="body2">
+                <strong>TARA:</strong> {row.pesoVazio || "Não informado"}
+              </Typography>
               <Box
                 sx={{
                   display: "flex",
@@ -199,7 +209,7 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
               >
 
                 <Typography variant="body2">
-                  <strong>Data:</strong> {dataCriacaoFormatada}
+                  <strong>Chegada:</strong> {dataCriacaoFormatada}
                 </Typography>
               </Box>
 
@@ -321,26 +331,26 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
               />
             </TableCell>
 
-     <TableCell align="center">
-  <FormControl variant="standard" sx={{ minWidth: 120 }}>
-    <Select
-      value={row.tipoProduto || ""} 
-      onChange={(e) =>
-        onInputChange(row.codigoCadastro!, "tipoProduto", e.target.value)
-      }
-      onBlur={() => salvarLinha(updatedRow)}
+            <TableCell align="center">
+              <FormControl variant="standard" sx={{ minWidth: 120 }}>
+                <Select
+                  value={row.tipoProduto || ""}
+                  onChange={(e) =>
+                    onInputChange(row.codigoCadastro!, "tipoProduto", e.target.value)
+                  }
+                  onBlur={() => salvarLinha(updatedRow)}
 
-    >
-      <MenuItem value="">
-        <em>{row.tipoProduto}</em>
-      </MenuItem>
+                >
+                  <MenuItem value="">
+                    <em>{row.tipoProduto}</em>
+                  </MenuItem>
 
-      <MenuItem value="GRANEL">GRANEL</MenuItem>
-      <MenuItem value="BAGS">BAGS</MenuItem>
-      <MenuItem value="SACARIA">SACARIA</MenuItem>
-    </Select>
-  </FormControl>
-</TableCell>
+                  <MenuItem value="GRANEL">GRANEL</MenuItem>
+                  <MenuItem value="BAGS">BAGS</MenuItem>
+                  <MenuItem value="SACARIA">SACARIA</MenuItem>
+                </Select>
+              </FormControl>
+            </TableCell>
 
             <TableCell align="center">
 
@@ -400,8 +410,16 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
             </TableCell>
 
 
-<TableCell align="center">
-  <FormControl variant="standard" sx={{ minWidth: 120 }}>
+       <TableCell align="center">
+  <FormControl
+    variant="standard"
+    sx={{
+      minWidth: 120,
+      "& .MuiInput-underline:before, & .MuiInput-underline:after": {
+        borderBottom: "none",
+      },
+    }}
+  >
     <Select
       value={row.operacao || ""}
       onChange={(e) =>
@@ -410,20 +428,29 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
       onBlur={() => salvarLinha(updatedRow)}
       displayEmpty
       renderValue={(selected) => {
-        if (!selected) {
-          return <em>Selecione</em>;
-        }
+        if (!selected) return <span>Selecione</span>;
+
+        const statusColors: Record<
+          string,
+          { bg: string; border: string; text: string }
+        > = {
+          CARREGAMENTO: { bg: "#FFF3CD", border: "#FFB300", text: "#B26A00" },
+          DESCARREGAMENTO: { bg: "#E3F2FD", border: "#1565C0", text: "#0D47A1" },
+          "": { bg: "#F0F0F0", border: "#C0C0C0", text: "#808080" },
+        };
+
+        const colors = statusColors[selected] || statusColors[""];
 
         return (
           <Chip
             label={selected}
             variant="outlined"
             sx={{
-              backgroundColor: selected ? "#FFF3CD" : "#E3F2FD",
-              borderColor: selected ? "#FFB300" : "#1565C0",
-              color: selected ? "#B26A00" : "#0D47A1",
+              backgroundColor: colors.bg,
+              borderColor: colors.border,
+              color: colors.text,
               fontWeight: 600,
-              height: 26
+              height: 26,
             }}
           />
         );
@@ -444,6 +471,7 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
     </Select>
   </FormControl>
 </TableCell>
+
 
             <TableCell align="center">
               <TextField
@@ -486,19 +514,20 @@ const TableRowMemo = forwardRef<HTMLTableRowElement, {
     );
   });
 
-const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
+const Tabela = ({ rows, fetchTodos, newRowRef }: TabelaProps) => {
 
 
   const isMobile = useIsMobile();
   const [tableRows, setTableRows] = useState<CadastroDTO[]>(rows);
   const [updatedRow, setUpdatedRow] = useState<CadastroDTO>(rows[0]);
 
-
+  const [saving, setSaving] = useState(false);
 
   const { showNotification, NotificationModal } = useNotification();
 
   useEffect(() => {
     setTableRows([...rows]);
+    setSaving(false)
   }, [rows]);
 
   const [expanded, setExpanded] = useState<number | false>(false);
@@ -531,7 +560,7 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
         apiCallPromise = ApiServices.atualizarPeso(codigoCadastro, userInput.value);
       } else {
 
-        showNotification("info", "Avançar para o próximo status?", `O status sera alterado de ${status} para o próximo`, async () => {
+        showNotification("info", "Avançar para o próximo status?", `Por favor confirme o avanço do status`, async () => {
 
           apiCallPromise = ApiServices.mudarStatus(codigoCadastro);
 
@@ -554,8 +583,6 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
             showNotification("error", "Erro inesperado", "Problema de comunicação com o servidor.");
           }
         });
-
-        // Para não continuar o fluxo antes da confirmação
         return;
       }
 
@@ -587,7 +614,7 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
   const onInputChange = useCallback(
     (codigoCadastro: number, campo: keyof CadastroDTO, valor: string | number) => {
       setTableRows((prevRows) => {
-
+        setSaving(true)
         const index = prevRows.findIndex((row) => row.codigoCadastro === codigoCadastro);
 
         if (index === -1) return prevRows;
@@ -602,7 +629,10 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
   );
 
   const salvarLinha = async (updatedRow: CadastroDTO) => {
-    if (updatedRow.codigoCadastro) await ApiServices.cadastrar(updatedRow);
+    if (updatedRow.status === "SALVAR") return
+
+    await ApiServices.cadastrar(updatedRow);
+    setSaving(false)
     console.log(updatedRow)
     fetchTodos();
 
@@ -610,6 +640,7 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
 
   const salvarCadastro = async (updatedRow: CadastroDTO) => {
     await ApiServices.cadastrar(updatedRow);
+    setSaving(false)
     fetchTodos();
 
   }
@@ -666,9 +697,11 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
         scrollBehavior: "smooth",
       }}
     >
+      <SavingIndicator saving={saving} />
       {NotificationModal}
       <Table stickyHeader aria-label="sticky table">
         <TableHead style={{ backgroundColor: "#363636f" }}>
+
           <TableRow >
             {isMobile && (
               <TableCell sx={{ maxWidth: widthSizeSx, ...tableHeadStyle }}>
@@ -764,6 +797,7 @@ const Tabela = ({ rows, fetchTodos,  newRowRef }: TabelaProps) => {
                 isMobile={isMobile}
                 statusColor={statusColor}
                 widthSizeSx={widthSizeSx}
+
                 fontSizeSx={fontSizeSx}
                 expanded={expanded === row.codigoCadastro}
                 onChange={handleAccordionChange(row.codigoCadastro!)}

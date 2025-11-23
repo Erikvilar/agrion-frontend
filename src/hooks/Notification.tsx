@@ -1,11 +1,12 @@
 
-import { InfoModal, type ActionTypeType } from "../components/modal-informativo/Component";
+import { ActionType, InfoModal, type ActionTypeType } from "../components/modal-informativo/Component";
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import { Box, Button } from "@mui/material";
 import type React from "react";
+import { grey } from "@mui/material/colors";
 
 
 interface NotificationProps {
@@ -42,18 +43,40 @@ const Notification = ({ type, title, message, isOpen, onClose, onConfirm }: Noti
       title={title}
       icon={switchType(type)}
       message={
-        <Box display="flex" flexDirection="column" alignItems="center">
+        <Box display="flex" flexDirection="column" alignItems="center" >
           <span>{message}</span>
-          {onConfirm && (
-            <Button
+       <Box display="flex" flexDirection="row" alignItems="center" >
+        {type === ActionType.Error   || type === ActionType.Success || type === ActionType.Warning ?  (
+             <Button
               variant="contained"
               color="primary"
-              sx={{ mt: 2 }}
-              onClick={onConfirm}
+              sx={{ mt: 2,mr:3  }}
+              onClick={onConfirm }
+            >
+              Entendido
+            </Button>
+        ):(
+          <>
+            <Button
+              variant="contained"
+              
+              sx={{ mt: 2,mr:3,backgroundColor:grey[500]}}
+              onClick={onClose}
+            >
+              Cancelar
+            </Button>
+               <Button
+              variant="contained"
+              color="primary"
+              sx={{ mt: 2,mr:3  }}
+              onClick={onConfirm }
             >
               Confirmar
             </Button>
-          )}
+            </>
+        ) }
+           
+     </Box>
         </Box>
       }
     />

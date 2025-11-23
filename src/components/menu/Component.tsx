@@ -14,18 +14,20 @@ import HistoryIcon from "@mui/icons-material/History";
 import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
-
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 type MenuLeftProps = {
   avatar: string;
  setIsOpen: (open: boolean) => void;
  isPageLogin:boolean;
+ handleLogout:()=> void;
 };
 
-export default function MenuLeft({ avatar,isPageLogin,setIsOpen}: MenuLeftProps) {
+export default function MenuLeft({ avatar,isPageLogin,setIsOpen,handleLogout}: MenuLeftProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigation = useNavigate();
   const open = Boolean(anchorEl);
-
+const login = localStorage.getItem("token")
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -42,6 +44,11 @@ export default function MenuLeft({ avatar,isPageLogin,setIsOpen}: MenuLeftProps)
     navigation("/lista_espera");
     handleClose();
   };
+  const handleContatarSuporte = () =>{
+  navigation("/suporte");
+
+  }
+  
 
   const userLogged = localStorage.getItem("token")
   console.log(isPageLogin, !userLogged)
@@ -174,10 +181,15 @@ export default function MenuLeft({ avatar,isPageLogin,setIsOpen}: MenuLeftProps)
               </Typography>
             </MenuItem>
 
-            <Divider />
+      
 
+          
+{login != "" ?(
+<>
+
+            <Divider/>
             <MenuItem
-              onClick={() => alert("Em breve!")}
+              onClick={handleContatarSuporte}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -188,13 +200,36 @@ export default function MenuLeft({ avatar,isPageLogin,setIsOpen}: MenuLeftProps)
                 },
               }}
             >
-              <HistoryIcon sx={{ color: green[400], fontSize: 22 }} />
+              <SupportAgentOutlinedIcon sx={{ color: green[400], fontSize: 22 }} />
               <Typography fontWeight={600} fontSize="0.9rem">
-                Histórico
+                Contatar suporte
               </Typography>
             </MenuItem>
+            </>
+):<></> }
           </Menu>
         )}
+
+     {login != "" ?(
+            <MenuItem
+              onClick={handleLogout}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                color: green[700],
+                "&:hover": {
+                  backgroundColor: green[50],
+                },
+              }}
+            >
+              <LogoutOutlinedIcon sx={{ color: "orange", fontSize: 22 }} />
+              <Typography fontWeight={600} fontSize="0.9rem">
+                Logout
+              </Typography>
+            </MenuItem>
+     ):<></>}
+      
       </AnimatePresence>
     </Box>
   );

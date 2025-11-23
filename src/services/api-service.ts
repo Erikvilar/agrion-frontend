@@ -36,6 +36,34 @@ const ApiServices = {
       };
     }
   },
+  async logout (user:UserDTO){
+   const response = await interceptor.post("auth/logout", { ...user });
+      try {
+      return {
+        success: true,
+        status: response.status,
+        data: response.data,
+
+      } 
+    }catch (error: any) {
+      if (error.response) {
+        return {
+          success: false,
+          status: error.response.status,
+          message: error.response.data?.message,
+          data: error.response.data || null,
+        };
+      }
+
+      return {
+        success: false,
+        status: 0,
+        message: error.message || "Erro de conexão com o servidor",
+        data: null,
+      };
+    }
+  
+  },
   async cadastrar(cadastro: CadastroDTO) {
     try {
       const response = await interceptor.post("cadastro", cadastro);

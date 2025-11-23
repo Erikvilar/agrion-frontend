@@ -94,6 +94,7 @@ export const LoginScreen = () => {
 
                     localStorage.setItem("token", data.token);
                     localStorage.setItem("user", data.fullName)
+                    localStorage.setItem("login",data.login)
                     localStorage.setItem("avatar", data.avatar);
                     navigation("/lista_espera")
                 }
@@ -183,7 +184,7 @@ export const LoginScreen = () => {
             }}
         >
             <LoadingIndicator ref={loaderRef} />
-            <img src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logo.jpg?raw=true" alt="" width={400} />
+            <img src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logo.jpg?raw=true" alt="" width={"90%"} />
 
             {NotificationModal}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
@@ -191,12 +192,12 @@ export const LoginScreen = () => {
                     <FormGroup
                         sx={{
                             width: '100%',
-                            maxWidth: isMobile ? 260 : 450, // controle da largura no container
-                            mx: 'auto',                     // centraliza horizontalmente
+                            maxWidth: isMobile ? 260 : 450, 
+                            mx: 'auto',               
                             mt: 2,
                         }}
                     >
-                        <FormControl sx={{ mb: 2 }}>
+                        <FormControl sx={{ mb: {xs:1,sm:2} }}>
                             <TextField
                                 id="my-input"
                                 placeholder="LOGIN"
@@ -207,7 +208,7 @@ export const LoginScreen = () => {
                             />
                         </FormControl>
 
-                        <FormControl sx={{ mb: 2 }}>
+                          <FormControl sx={{ mb: {xs:1,sm:2} }}>
                             <TextField
                                 id="my-password"
                                 placeholder="SENHA"
