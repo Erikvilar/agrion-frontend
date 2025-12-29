@@ -15,7 +15,8 @@ import {
     Switch,
     TextField,
     Tooltip,
-    Typography
+    Typography,
+    type SelectChangeEvent
 } from "@mui/material";
 import { green, grey, orange, red } from "@mui/material/colors";
 import React, { useState } from "react";
@@ -31,7 +32,7 @@ interface Errors {
 
 interface CadastroVeiculoFormProps {
     cadastro: CadastroDTO | null;
-    handleCadastro: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCadastro: (e: FormChangeEvent) => void;
     errors: Errors;
     status: StatusDTO[];
     submitCadastro: (isPreCadastro: boolean) => void;
@@ -40,7 +41,9 @@ interface CadastroVeiculoFormProps {
 
 // Otimização: Estilo constante movido para fora para evitar recriação a cada render
 const inputStyle = { bgcolor: "#fff" };
-
+type FormChangeEvent =
+  | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  | SelectChangeEvent;
 export const CadastroForm = ({
     cadastro,
     handleCadastro,

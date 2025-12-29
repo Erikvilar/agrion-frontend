@@ -49,17 +49,7 @@ const STYLES = {
     }
 };
 
-const STATUS_COLOR: Record<string, string> = {
-    INATIVO: Constants.INATIVO,
-    RECEBIDO: Constants.RECEBIDO,
-    AGUARDANDO: Constants.AGUARDANDO,
-    OPERACAO: Constants.OPERACAO,
-    CONVOCADO: Constants.CONVOCADO,
-    DESPACHE: Constants.DESPACHE,
-    CONCLUIDO: Constants.CONCLUIDO,
-    ATUALIZAR: Constants.ATUALIZAR,
-    SALVAR: Constants.SALVAR,
-};
+
 
 // --- HELPER PARA CHIP DE OPERAÇÃO ---
 const RenderOperacaoChip = ({ operacao }: { operacao: string }) => {

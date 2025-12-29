@@ -1,19 +1,18 @@
 
-import Drawer, { type DrawerProps } from "@mui/material/Drawer";
 import {
   Box,
-  Typography,
-  TextField,
   Button,
-  FormControl,
   Divider,
-  Select,
+  FormControl,
   MenuItem,
-
+  Select,
+  TextField,
+  Typography,
 } from "@mui/material";
 import { green, grey } from "@mui/material/colors";
-import type CadastroDTO from "../../model/CadastroDTO";
+import Drawer, { type DrawerProps } from "@mui/material/Drawer";
 import { motion } from "framer-motion";
+import type CadastroDTO from "../../model/CadastroDTO";
 
 
 type CadastroField = {
@@ -35,12 +34,11 @@ interface Errors {
 interface LateralFormDrawerProps extends Omit<DrawerProps, "children"> {
   open: boolean;
   onClose: () => void;
-  cadastro: CadastroDTO;
-handleCadastro: (e: any) => void; 
+  cadastro: CadastroDTO | null;
+  handleCadastro: (e: any) => void;
   errors: Errors;
   submitCadastro: () => void;
 }
-
 export function LeftModal({
   open,
   onClose,
@@ -147,7 +145,7 @@ const cadastroFields: CadastroField[] = [
         size="small"
         fullWidth
         name={field.name}
-        value={cadastro[field.name] || ""}
+        value={cadastro?.[field.name] || ""}
         onChange={handleCadastro}
         sx={{
           backgroundColor: "#fff",
@@ -170,7 +168,7 @@ const cadastroFields: CadastroField[] = [
         fullWidth
         name={field.name}
         placeholder={field.placeholder}
-        value={cadastro[field.name] || ""}
+        value={cadastro?.[field.name] || ""}
         onChange={handleCadastro}
         error={!!field.error}
         helperText={field.error ? field.helper : ""}

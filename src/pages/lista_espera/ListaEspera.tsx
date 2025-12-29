@@ -42,7 +42,10 @@ function createData(
         tipoProduto, produto, operacao, pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
     };
 }
-
+export type ChangeEventTarget = {
+  name?: string;
+  value: string;
+};
 interface ListaEsperaProps {
     isModalOpen: boolean;
     setIsModalOpen: (open: boolean) => void;
@@ -250,18 +253,28 @@ const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
 
     const errors = {};
 
-    const handleCadastro = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
-        const { name, value } = e.target;
+const handleCadastro = useCallback(
+  (
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | SelectChangeEvent
+  ) => {
+    const target = e.target as ChangeEventTarget;
+    const { name, value } = target;
 
-        setCadastro((prev) => {
-            if (!prev) return null; // Segurança caso o estado esteja nulo
+    if (!name) return;
 
-            return {
-                ...prev,
-                [name]: value
-            };
-        });
-    }, []);
+    setCadastro((prev) => {
+      if (!prev) return null;
+
+      return {
+        ...prev,
+        [name]: value
+      };
+    });
+  },
+  []
+);
     const submitCadastro = async () => {
         if (!cadastro) return;
 
