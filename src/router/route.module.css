@@ -19,16 +19,27 @@
 
 .navbar {
     width: 100%;
-    height: 50px;
+    height: 64px; /* Aumentado de 50px para 64px (Padrão de interfaces modernas) */
     position: fixed;
     top: 0;
-    z-index: 2;
-    justify-content: space-between;
+    left: 0; /* Garante que comece do início */
+    z-index: 1200; /* Aumentado para garantir que fique acima de modais padrão */
+    
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    
+    padding: 0 20px; /* Alinhado com a borda de 20px do conteúdo principal */
     box-sizing: border-box;
-    background-color: rgb(76, 175, 80);
 
+    /* --- ESTILO NOVO (IGUAL AO SKETCH) --- */
+    background-color: #7dc75b; /* Fundo branco limpo */
+    border-bottom: 1px solid #E5E7EB; /* Linha cinza sutil na parte inferior */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); /* Sombra levíssima para dar profundidade */
+    
+    /* Se houver texto solto na navbar, garante que seja escuro */
+    color: #111827; 
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
 }
 .buttonLogout {
   margin-right: 20px;
@@ -50,7 +61,7 @@
 .navbar ul {
     margin-left:50px;
     color: white;
-     background-color: rgb(76, 175, 80);
+    
     list-style: none;
 }
 

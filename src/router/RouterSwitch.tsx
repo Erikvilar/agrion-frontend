@@ -25,8 +25,7 @@ const RouterSwitch = () => {
     const { showNotification, NotificationModal } = useNotification();
     const [isModalOpen, setIsModalOpen] = useState(false)
     const pathAtual = location.pathname;
-    const avatarDefault =
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQacUh90SamEZDJyLexiUhv232yT4JkGgedIQ&s";
+    const avatarDefault ="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQacUh90SamEZDJyLexiUhv232yT4JkGgedIQ&s";
 
     const [icon, setIcon] = useState<string>(avatarDefault);
 
@@ -73,8 +72,8 @@ const RouterSwitch = () => {
         const user = localStorage.getItem("login")
         const logoutUser: string = user?.trim() ? user : "";
         const logoutPlain: UserDTO = {
-            login: logoutUser
-
+            login: logoutUser,
+            password: ""
         }
         console.log(logoutPlain)
         const { status, success, data, } = await ApiServices.logout(logoutPlain)

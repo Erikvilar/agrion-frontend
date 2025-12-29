@@ -1,77 +1,45 @@
-
+import { Search } from "@mui/icons-material";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import CachedIcon from "@mui/icons-material/Cached";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SortIcon from '@mui/icons-material/Sort';
 import {
-
-    Box, CircularProgress, IconButton, InputAdornment, TextField, Collapse,
+    Box,
+    Button,
+    Chip,
+    CircularProgress, Divider, InputAdornment,
+    Paper,
+    Stack,
+    TextField,
+    Typography,
     type SelectChangeEvent
 } from "@mui/material";
-
-import CachedIcon from "@mui/icons-material/Cached";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import Inventory2Icon from "@mui/icons-material/Inventory2";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import CampaignIcon from "@mui/icons-material/Campaign";
-import SyncIcon from "@mui/icons-material/Sync";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import BlockIcon from "@mui/icons-material/Block";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import Tabela from "./Tabela";
-
-import style from "./style.module.css"
-
-import { useIsMobile } from "../../hooks/useIsMobile";
-
-import Constants from "../../constants/Constants";
-
-import { ArrowRight, Search } from "@mui/icons-material";
-
 import { useCallback, useEffect, useRef, useState } from "react";
-
-import type CadastroDTO from "../../model/CadastroDTO";
-
-import ApiServices from "../../services/api-service";
-
-import { green } from "@mui/material/colors";
-
+import { CadastroForm } from "../../components/cadastroForm/CadastroForm";
 import { LeftModal } from "../../components/left-modal-component/LeftModal";
-
-
-
-import { enviarNotificacao } from "../../utils/enviarNotificacao";
-
-
-
-
-
-import ModalHelper from "../../components/modal-help/ModalHelper";
 import type { LoadingIndicatorRef } from "../../components/loading-indicator/Component";
 import LoadingIndicator from "../../components/loading-indicator/Component";
+import { OffCanvasDrawer, type OffcanvasRef } from "../../components/offCanvasDrawer/OffCanvasDrawer";
+import { CenteredModal, type ModalRef } from "../../components/vertical_central_modal/CenteredModal";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import type CadastroDTO from "../../model/CadastroDTO";
+import type StatusDTO from "../../model/StatusDTO";
+import ApiServices from "../../services/api-service";
+import { enviarNotificacao } from "../../utils/enviarNotificacao";
+import Tabela from "./Tabela";
 
-
-
+// --- Funções Auxiliares (Mantidas) ---
 function createData(
-    codigoCadastro: number,
-    nomeMotorista: string,
-    telefone: number | null,
-    cpf: string,
-    corVeiculo: string,
-    placa: string,
-    marca: string,
-    modelo: string,
-    tipoProduto: string,
-    produto: string,
-    operacao: string,
-    pesoVazio: number,
-    pesoCarregado: number | undefined,
-    vigia: string,
-
-    numeroOrdem: number,
-    status: string,
-    dataCriacao?: string | Date
-
+    codigoCadastro: number, nomeMotorista: string, telefone: number | null, cpf: string,
+    corVeiculo: string, placa: string, marca: string, modelo: string, tipoProduto: string,
+    produto: string, operacao: string, pesoVazio: number, pesoCarregado: number | undefined,
+    vigia: string, numeroOrdem: number, status: string, dataCriacao?: string | Date
 ) {
     return {
-        codigoCadastro, nomeMotorista, telefone, cpf, corVeiculo, placa, marca, modelo, tipoProduto, produto, operacao, pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
+        codigoCadastro, nomeMotorista, telefone, cpf, corVeiculo, placa, marca, modelo,
+        tipoProduto, produto, operacao, pesoVazio, pesoCarregado, vigia, numeroOrdem, status, dataCriacao
     };
 }
 
@@ -80,20 +48,10 @@ interface ListaEsperaProps {
     setIsModalOpen: (open: boolean) => void;
 }
 
-
-
 const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const isMobile = useIsMobile();
-    const [openFiltro, setOpenFiltro] = useState(false);
     const loaderRef = useRef<LoadingIndicatorRef>(null);
-    const [isCadastrando, setIsCadastrando] = useState(false)
-
-
-
-
-
-
     const open = isModalOpen;
 
     const handleCloseModal = () => {
@@ -101,451 +59,461 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     };
 
     const [busca, setBusca] = useState("");
-
     const [rows, setRows] = useState<CadastroDTO[]>([])
-
     const [isRefreshing, setIsRefreshing] = useState(false);
-
-
     const newRowRef = useRef<HTMLTableRowElement | null>(null);
-    const [cadastro, SetCadastro] = useState<CadastroDTO>({
-        nomeMotorista: "",
+    const modalRef = useRef<ModalRef>(null);
+    const offcanvasRef = useRef<OffcanvasRef>(null);
+
+
+    const getCadastroVazio = (): CadastroDTO => {
+        return {
+            codigoCadastro: 0, // 0 sinaliza para o Backend que é NOVO
+            nomeMotorista: '',
+            telefone: null,
+            cpf: '',
+            corVeiculo: '',
+            placa: '',
+            marca: '',
+            modelo: '',
+            operacao: '',
+            tipoProduto: '',
+            produto: '',
+            pesoVazio: 0,
+            pesoCarregado: undefined,
+            numeroOrdem: 0,
+            status: 'Sem Ordem de Carregamento',
+            vigia: '',
+            dataCriacao: undefined
+        };
+    };
+
+    const [cadastro, setCadastro] = useState<CadastroDTO | null>({
+        nomeMotorista: '',
         telefone: null,
-        cpf: "",
-        corVeiculo: "",
-        placa: "",
-        marca: "",
+        cpf: '',
+        corVeiculo: '',
+        placa: '',
+        marca: '',
+        modelo: '',
+        operacao: '',
+        tipoProduto: '',
+        produto: '',
         pesoVazio: 0,
-        modelo: "",
-        vigia: "",
-        tipoProduto: "",
-        produto: "",
-        operacao: "",
+        pesoCarregado: 0,
         numeroOrdem: 0,
-        status: "",
+        status: '',
+        vigia: 'Nome do Usuário Logado',
     })
 
+    const [status, setStatus] = useState<StatusDTO[]>();
+    const [filtroAtivo, setFiltroAtivo] = useState<number | null>(null);
+
+
+    const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
+const handleOrdenar = (tipo: 'asc' | 'desc') => {
+        setOrdem(tipo);
+        
+        // Criamos uma cópia do array para não mutar o estado diretamente
+        const sortedRows = [...rows].sort((a, b) => {
+            // Tratamento para datas nulas ou undefined (coloca no final ou inicio dependendo da logica)
+            const dataA = a.dataCriacao ? new Date(a.dataCriacao).getTime() : 0;
+            const dataB = b.dataCriacao ? new Date(b.dataCriacao).getTime() : 0;
+
+            if (tipo === 'asc') {
+                return dataA - dataB; // Mais antigo para mais novo
+            } else {
+                return dataB - dataA; // Mais novo para mais antigo
+            }
+        });
+
+        setRows(sortedRows);
+    };
     const buscarPorDescricao = async () => {
         if (!busca) return;
-
+        setFiltroAtivo(null);
         const resultado = await ApiServices.buscarPorDescricao(busca);
-
         if (resultado.success && resultado.data) {
-
-            const novaRows = resultado.data.map((item: CadastroDTO) => ({
-                ...item
-            }));
+            const novaRows = resultado.data.map((item: CadastroDTO) => ({ ...item }));
             setRows(novaRows);
         } else {
             setRows([]);
-            console.error("Erro ao buscar:", resultado.message);
         }
     };
 
-    const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
-    
+    const buscarToddosStatus = async () => {
+        const { data, success } = await ApiServices.buscarTodosStatus();
+        if (success) {
+            setStatus(data);
+        }
+    }
+
+const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
         if (isBackgroundFetching) setIsRefreshing(true)
+        setFiltroAtivo(null);
         const { success, data } = await ApiServices.buscarTodos();
         if (success && data) {
             const novaRows = data.map((item: CadastroDTO) =>
                 createData(item.codigoCadastro!, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
-            setRows(novaRows);
+            // Aplica ordenação padrão (desc) ao carregar
+            const sorted = novaRows.sort((a: any, b: any) => {
+                 const dA = a.dataCriacao ? new Date(a.dataCriacao).getTime() : 0;
+                 const dB = b.dataCriacao ? new Date(b.dataCriacao).getTime() : 0;
+                 return dB - dA;
+            });
+            setRows(sorted);
+            setOrdem('desc'); // Reseta visualmente para desc
         } else {
-
             setRows([]);
-
         }
         if (isBackgroundFetching) setIsRefreshing(false)
-
     }, []);
-   
-    const buscarPorStatus = useCallback(async (codigo: number, isBackgroundFetch = false) => {
 
+    const buscarPorStatus = useCallback(async (codigo: number, indexStatus: number, isBackgroundFetch = false) => {
         if (isBackgroundFetch) setIsRefreshing(true);
-
+        setFiltroAtivo(indexStatus);
         const response = await ApiServices.buscarPorStatus(codigo);
-
         if (response.success && response.data) {
             const novaRows = response.data.map((item: CadastroDTO) =>
                 createData(item.codigoCadastro!, item.nomeMotorista, item.telefone, item.cpf, item.corVeiculo, item.placa, item.marca, item.modelo, item.tipoProduto, item.produto, item.operacao, item.pesoVazio, item.pesoCarregado, item.vigia, item.numeroOrdem, item.status, item.dataCriacao)
             );
-
-
             setRows(novaRows);
-
         } else {
             setRows([]);
-            console.error("Erro ao buscar todos:", response.message);
         }
         if (isBackgroundFetch) setIsRefreshing(false);
     }, []);
 
     useEffect(() => {
-  loaderRef.current?.start()
+        loaderRef.current?.start()
         fetchTodos()
-  loaderRef.current?.done()
+        buscarToddosStatus()
+        loaderRef.current?.done()
     }, [setIsModalOpen, isModalOpen])
 
-    const buttonstatus = [
-
-
-        {
-            id: "3",
-            title: "RECEBIDO",
-            codigo: 1,
-            background: Constants.RECEBIDO,
-            acao: () => buscarPorStatus(1),
-            icon: <Inventory2Icon style={{ color: "white" }} />
-        },
-
-        {
-            id: "4",
-            title: "AGUARDANDO",
-            codigo: 2,
-            background: Constants.AGUARDANDO,
-            acao: () => buscarPorStatus(2),
-            icon: <HourglassEmptyIcon style={{ color: "white" }} />
-        },
-
-        {
-            id: "5",
-            title: "CONVOCADO",
-            codigo: 3,
-            background: Constants.CONVOCADO,
-            acao: () => buscarPorStatus(3),
-            icon: <CampaignIcon style={{ color: "white" }} />
-        },
-
-        {
-            id: "6",
-            title: "OPERAÇÃO",
-            codigo: 4,
-            background: Constants.OPERACAO,
-            acao: () => buscarPorStatus(4),
-            icon: <SyncIcon style={{ color: "white" }} />  // simboliza processo
-        },
-
-        {
-            id: "7",
-            title: "DESPACHE",
-            codigo: 5,
-            background: Constants.DESPACHE,
-            acao: () => buscarPorStatus(5),
-            icon: <LocalShippingIcon style={{ color: "white" }} />  // saída/transporte
-        },
-
-        {
-            id: "8",
-            title: "CONCLUIDO",
-            codigo: 6,
-            background: Constants.CONCLUIDO,
-            acao: () => buscarPorStatus(6),
-            icon: <CheckCircleIcon style={{ color: "white" }} />  // finalizado
-        },
-
-        {
-            id: "9",
-            title: "INATIVO",
-            codigo: 7,
-            background: Constants.INATIVO,
-            acao: () => buscarPorStatus(7),
-            icon: <BlockIcon style={{ color: "white" }} />
-        }
-    ];
 
     const buttonActions = [
         {
             id: "1",
             title: "Atualizar",
-            codigo: null,
-            background: "#1976D2", // Azul padrão UX
-            acao: () => {
-                fetchTodos(false);
-
-            },
+            background: "#2563EB",
+            hover: "#1D4ED8",
+            acao: () => { fetchTodos(false); },
             icon: isRefreshing
-                ? (
-                    <CircularProgress
-                        size={22}
-                        sx={{ color: "#FFFFFF", marginRight: 8 }}
-                    />
-                )
+                ? (<CircularProgress size={20} sx={{ color: "#FFFFFF" }} />)
                 : <CachedIcon sx={{ color: "#FFFFFF" }} />
         },
-
         {
             id: "2",
             title: "Cadastrar",
-            codigo: null,
-            background: "#2E7D32", // Verde positivo e consistente
+            background: "#10B981",
+            hover: "#059669",
             acao: () => {
-                setIsCadastrando(true);
-                adicionarLinhaEmBranco();
+                handleClearForm();     // Limpa o estado 'cadastro'
+                offcanvasRef.current?.open();
             },
             icon: <AddCircleIcon sx={{ color: "#FFFFFF" }} />
         },
         {
             id: "3",
-            background: "#238681ff",
-            icon: <ModalHelper />
+            title: "Limpar filtros",
+            background: "#faa93fff",
+            hover: "#eb9c0bff",
+            acao: () => { fetchTodos(false); },
+            icon: isRefreshing
+                ? (<CircularProgress size={20} sx={{ color: "#FFFFFF" }} />)
+                : <CachedIcon sx={{ color: "#FFFFFF" }} />
+        },
+        {
+            id: "4",
+            title: "Ajuda",
+            background: "#0D9488",
+            hover: "#0F766E",
+            acao: () => { offcanvasRef.current?.open() },
+            icon: <HelpOutlineIcon sx={{ color: "#FFFFFF" }} />
         }
     ];
 
-    const focused = {
-        "& .MuiOutlinedInput-root": {
-            height: 40,
-            "&.Mui-focused fieldset": {
-                borderColor: green[500],
-            }
-        },
-        "& label.Mui-focused": {
-            color: green[500],
-        }
-    }
-
-    const handleClose = () => setIsModalOpen(false)
-
-    const adicionarLinhaEmBranco = async () => {
-        loaderRef.current?.done()
-        await fetchTodos()
-        const user = localStorage.getItem("user")
-        if (user) {
-            const novaLinha: CadastroDTO = {
-                codigoCadastro: 0,
-                nomeMotorista: "",
-                telefone: null,
-                cpf: "",
-                corVeiculo: "",
-                placa: "",
-                marca: "",
-                modelo: "",
-                pesoVazio: 0,
-                pesoCarregado: undefined,
-                vigia: user,
-                numeroOrdem: 0,
-                status: "SALVAR",
-                dataCriacao: new Date(),
-                operacao: "",
-                tipoProduto: "",
-                produto: ""
-            };
-            setRows((prevRows) => [novaLinha, ...prevRows]);
-            setTimeout(() => {
-                newRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            }, 100);
-        } else {
-
-        }
 
 
 
-
+    const handleRowClick = (row: CadastroDTO) => {
+  
+        setCadastro(row);    // Preenche o formulário com os dados da linha
+        offcanvasRef.current?.open();
     };
-
+    const handleClearForm = () => {
+  
+        setCadastro(getCadastroVazio());
+    };
 
     const errors = {};
 
-    const handleCadastro = (
-        e: React.ChangeEvent<HTMLInputElement> | SelectChangeEvent
-    ) => {
+    const handleCadastro = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
         const { name, value } = e.target;
 
-        SetCadastro((prev) => ({
-            ...prev,
-            [name]: value
-        }));
-    };
+        setCadastro((prev) => {
+            if (!prev) return null; // Segurança caso o estado esteja nulo
 
+            return {
+                ...prev,
+                [name]: value
+            };
+        });
+    }, []);
     const submitCadastro = async () => {
-        if (cadastro.telefone == null) {
+        if (!cadastro) return;
 
-
-        } else if (cadastro.cpf == null) {
-
-
+        // Validações básicas
+        if (!cadastro.telefone || !cadastro.cpf) {
+            // Adicione aqui um toast/alert de erro se necessário
+            alert("Preencha Telefone e CPF");
+            return;
         }
 
-        else {
-            const numeroTel = cadastro.telefone.toString().replace(/^\(\d{2}\)\s?|\-/g, "")
-            console.log(numeroTel)
-            enviarNotificacao("Olá seu veiculo foi inserido no na fila para descarga", `${cadastro.telefone.toString().replace(/^\(\d{2}\)\s?|\-/g, "")}`)
-            cadastro.codigoCadastro = 0;
-            console.log(cadastro)
-            await ApiServices.cadastrar(cadastro);
-            handleClose();
+        try {
+            loaderRef.current?.start();
 
+            if (cadastro.codigoCadastro && cadastro.codigoCadastro > 0) {
+
+                console.log("Atualizando registro...", cadastro);
+
+
+                await ApiServices.cadastrar(cadastro);
+            } else {
+
+                enviarNotificacao("Notificação enviada", `${cadastro.telefone}`);
+
+
+                const novoCadastro = { ...cadastro, codigoCadastro: 0 };
+                await ApiServices.cadastrar(novoCadastro);
+            }
+
+
+            await fetchTodos(true);
+            offcanvasRef.current?.close();
+
+        } catch (error) {
+            console.error("Erro ao salvar", error);
+        } finally {
+            loaderRef.current?.done();
         }
-    }
-
+    };
     return (
-        <Box
-            sx={{
-                height: isMobile ? 500 : "100vh",
-                display: "flex",
-                flexDirection: "column",
-                scrollbarWidth: 1,
-                width: "100%",
-            }}
-        >
+        <Box sx={{
+            height: "100vh",
+            display: "flex",
+            marginTop: 10,
+            flexDirection: "column",
+            backgroundColor: "#F3F4F6",
+            width: "100%",
+            overflowY: "auto",
+            overflowX: "hidden"
+        }}>
             <LoadingIndicator ref={loaderRef} />
-            <div>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: isMobile ? 'center' : 'start', marginLeft: isMobile ? 0 : 20, paddingTop: isMobile ? 0 : 100, marginBottom: 4 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: '50%' }}>
-                        <h2 style={{ marginBottom: 10 }}>DASHBOARD GERENCIAL</h2>
+            <OffCanvasDrawer
+                ref={offcanvasRef}
+                title="Filtros Avançados"
+                position="left"
+                width={700}
 
-                    </div>
+            >
 
+                <CadastroForm
+                    cadastro={cadastro}
+                    handleCadastro={handleCadastro}
+                    errors={errors}
+                    status={status!}
+                    submitCadastro={submitCadastro}
+                    clearForm={handleClearForm} // <--- Passando a função aqui
+                />
+
+            </OffCanvasDrawer>
+
+            <CenteredModal
+                ref={modalRef}
+                title="Formulário Encapsulado"
+                maxWidth="md" children={undefined}
+            />
+
+            {/* AJUSTE PRINCIPAL AQUI:
+                Removido maxWidth e margin:auto.
+                Padding fixo em 20px.
+            */}
+            <Box sx={{
+                padding: "20px",
+                width: "100%",
+                boxSizing: "border-box"
+            }}>
+
+                {/* --- HEADER --- */}
+                <Box sx={{
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                    justifyContent: "space-between",
+                    alignItems: isMobile ? "flex-start" : "center",
+                    mb: 3
+                }}>
+                    <Box>
+                        <Typography variant="h4" sx={{ fontWeight: 700, color: "#111827", fontSize: isMobile ? '1.5rem' : '2.125rem' }}>
+                            Painel principal
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: "#6B7280", mt: 0.5 }}>
+                            Gerenciador de cargas.
+                        </Typography>
+                    </Box>
+
+                    {/* Botões alinhados à direita */}
+                    <Stack direction={isMobile ? "column" : "row"} spacing={2} sx={{ mt: isMobile ? 2 : 0, width: isMobile ? '100%' : 'auto' }}>
+                        {buttonActions.map((btn) => (
+                            <Button
+                                key={btn.id}
+                                variant="contained"
+                                startIcon={btn.icon}
+                                onClick={btn.acao}
+                                fullWidth={isMobile}
+                                sx={{
+                                    backgroundColor: btn.background,
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    padding: "8px 20px",
+                                    boxShadow: "none", // Design mais Flat
+                                    "&:hover": {
+                                        backgroundColor: btn.hover,
+                                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                                    }
+                                }}
+                            >
+                                {btn.title}
+                            </Button>
+                        ))}
+                    </Stack>
+                </Box>
+
+                {/* --- ÁREA DE FILTROS E BUSCA --- */}
+                <Paper elevation={0} sx={{
+                    p: 2,
+                    borderRadius: 3,
+                    border: "1px solid #E5E7EB",
+                    mb: 3,
+                    backgroundColor: "#FFFFFF",
+                    width: "100%" // Garante largura total
+                }}>
 
                     <TextField
-                        type="search"
-                        placeholder="Buscar..."
+                        fullWidth
+                        placeholder="Pesquisar por motorista, placa, CPF ou número da ordem..."
                         variant="outlined"
-                        size="small"
-                        label="Pesquisar"
+                        size="small" // Input um pouco mais compacto
                         value={busca}
                         onChange={(e) => setBusca(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") buscarPorDescricao();
+                        onKeyDown={(e) => { if (e.key === "Enter") buscarPorDescricao(); }}
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                                backgroundColor: "#F9FAFB",
+                                "& fieldset": { borderColor: "#E5E7EB" },
+                                "&:hover fieldset": { borderColor: "#D1D5DB" },
+                                "&.Mui-focused fieldset": { borderColor: "#2563EB" }
+                            }
                         }}
-                        sx={{ width: isMobile ? "100%" : "50%", borderRadius: 10, ...focused }}
-                        slotProps={{
-                            input: {
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton onClick={buscarPorDescricao} aria-label="search">
-                                            <Search />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            },
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search sx={{ color: "#9CA3AF" }} />
+                                </InputAdornment>
+                            ),
                         }}
                     />
 
-                </div>
-                {isMobile ? <></> :
-                    <div style={{ marginTop: 10, display: "flex", flexDirection: "row", padding: 10 }}>
+                    {!isMobile && (
+                        <Box sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            mt: 2,
+                            gap: 1.5,
+                            flexWrap: "wrap"
+                        }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+                                Filtros rápidos:
+                            </Typography>
 
+                            <Chip
+                                label="Todos"
+                                onClick={() => fetchTodos(false)}
+                                size="small"
+                                sx={{
+                                    backgroundColor: filtroAtivo === null ? "#111827" : "#F3F4F6",
+                                    color: filtroAtivo === null ? "#FFF" : "#374151",
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    "&:hover": { backgroundColor: filtroAtivo === null ? "#000" : "#E5E7EB" }
+                                }}
+                            />
 
-                        <Box sx={{ width: "100%" }}>
-
-                            <Box sx={{ display: "flex", flexDirection: "row" }}>
-                                <button
-                                    onClick={() => setOpenFiltro(!openFiltro)}
-
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        padding: "8px 12px",
-                                        backgroundColor: "#e0e0e0",
-                                        borderRadius: 6,
-                                        cursor: "pointer",
-                                        border: "none",
-                                        marginLeft: 3,
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    <FilterListIcon style={{ marginRight: 8 }} />
-                                    <span style={{ fontWeight: 600 }}>Filtros</span>
-                                    <ArrowRight
-                                        style={{
-                                            marginLeft: 8,
-                                            transform: openFiltro ? "rotate(90deg)" : "rotate(0deg)",
-                                            transition: "0.2s",
-                                        }}
-                                    />
-                                </button>
-                                {buttonActions.map((value) => (
-                                    <button
-                                        onClick={value.acao}
-                                        key={value.id}
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            padding: "8px 12px",
-                                            backgroundColor: value.background,
-                                            borderRadius: 6,
-                                            cursor: "pointer",
-                                            border: "none",
-                                            marginLeft: 10,
-                                            marginBottom: 8,
-                                        }}
-                                    >
-                                        {value.icon}
-                                        <span style={{ fontWeight: 600, color: "white" }}>{value.title}</span>
-                                        <ArrowRight
-                                            style={{
-                                                marginLeft: 8,
-                                                transform: openFiltro ? "rotate(90deg)" : "rotate(0deg)",
-                                                transition: "0.2s",
-                                            }}
-                                        />
-                                    </button>
-                                ))}
-                            </Box>
-
-
-
-                            <Collapse in={openFiltro} timeout="auto" unmountOnExit>
+                            {status?.map((value, index) => (
                                 <Box
+                                    key={index}
+                                    onClick={() => buscarPorStatus(value.id, index)}
                                     sx={{
                                         display: "flex",
-                                        flexDirection: "row",
-                                        gap: 1,
-                                        width: "100%",
-                                        flexWrap: "wrap",
-                                        backgroundColor: "white",
-                                        p: 1,
-                                        borderRadius: 1,
+                                        alignItems: "center",
+                                        padding: "4px 10px",
+                                        borderRadius: "20px",
+                                        cursor: "pointer",
+                                        backgroundColor: filtroAtivo === index ? `${value.corHexadecimal}20` : "transparent",
+                                        border: `1px solid ${filtroAtivo === index ? value.corHexadecimal : "#E5E7EB"}`,
+                                        transition: "all 0.2s ease",
+                                        "&:hover": {
+                                            backgroundColor: `${value.corHexadecimal}10`,
+                                            borderColor: value.corHexadecimal
+                                        }
                                     }}
                                 >
-                                    {buttonstatus.map((value, index) => (
-                                        <button
-                                            key={index}
-                                            style={{
-                                                backgroundColor: value.background,
-                                                cursor: "pointer",
-                                                maxHeight: 50,
-                                                height: 35,
-                                                display: "flex",
-                                                alignItems: "center",
-                                                borderRadius: 6,
-                                                padding: "0 10px",
-                                                border: "none",
-                                                transition: "transform 0.2s",
-                                            }}
-                                            onClick={value.acao}
-                                            className={style?.isDesktop}
-                                        >
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "space-between",
-                                                    width: "60%",
-                                                }}
-                                            >
-                                                {value.icon}
-                                                <span
-                                                    style={{
-                                                        fontWeight: 600,
-                                                        color: "white",
-                                                        fontSize: 12,
-                                                    }}
-                                                >
-                                                    {value.title}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
+                                    <Box sx={{
+                                        width: 8, height: 8, borderRadius: "50%",
+                                        backgroundColor: value.corHexadecimal, mr: 1
+                                    }} />
+                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "#374151", fontSize: '0.875rem' }}>
+                                        {value.descricao}
+                                    </Typography>
                                 </Box>
-                            </Collapse>
+                            ))}
+                                <Divider sx={{ my: 2 }} />
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <SortIcon fontSize="small"/> Ordenar por data:
+                                </Typography>
+                                
+                                <Chip
+                                    icon={<ArrowDownwardIcon />}
+                                    label="Mais recentes"
+                                    onClick={() => handleOrdenar('desc')}
+                                    size="small"
+                                    variant={ordem === 'desc' ? "filled" : "outlined"}
+                                    color={ordem === 'desc' ? "primary" : "default"}
+                                    clickable
+                                />
+
+                                <Chip
+                                    icon={<ArrowUpwardIcon />}
+                                    label="Mais antigos"
+                                    onClick={() => handleOrdenar('asc')}
+                                    size="small"
+                                    variant={ordem === 'asc' ? "filled" : "outlined"}
+                                    color={ordem === 'asc' ? "primary" : "default"}
+                                    clickable
+                                />
+                            </Box>
                         </Box>
+                        
+                    )}
+                
+                </Paper>
 
-
-                    </div>
-                }
                 <LeftModal
                     open={open}
                     onClose={handleCloseModal}
@@ -555,11 +523,16 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                     submitCadastro={submitCadastro}
                 />
 
-                <Tabela rows={rows} fetchTodos={fetchTodos} newRowRef={newRowRef} isCadastrando={isCadastrando} />
-            </div>
+                <Paper elevation={0} sx={{
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    border: "1px solid #E5E7EB",
+                    width: "100%"
+                }}>
+                    <Tabela rows={rows} fetchTodos={fetchTodos} newRowRef={newRowRef} handleRowClick={handleRowClick} status={status!} />
+                </Paper>
+            </Box>
         </Box>
     )
 }
 export default ListaEspera;
-
-

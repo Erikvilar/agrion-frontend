@@ -251,6 +251,32 @@ const ApiServices = {
         data: null,
       };
     }
+  },
+  async buscarTodosStatus(){
+  try {
+      const response = await interceptor.get("cadastro/BuscarTodosStatus");
+      return {
+        success: true,
+        status: response.status,
+        data: response.data,
+      };
+    } catch (error: any) {
+      
+      if (error.response) {
+        return {
+          success: false,
+          status: error.response.status,
+          message: error.response.data?.message,
+          data: error.response.data || null,
+        };
+      }
+      return {
+        success: false,
+        status: 0,
+        message: error.message || "Erro de conexão com o servidor",
+        data: null,
+      };
+    }
   }
 
 }

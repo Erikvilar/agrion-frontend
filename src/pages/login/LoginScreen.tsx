@@ -1,243 +1,280 @@
+import {
+    Lock as LockIcon,
+    Person as PersonIcon,
+    Visibility,
+    VisibilityOff
+} from "@mui/icons-material";
+import {
+    Box,
+    Button,
+    IconButton,
+    InputAdornment,
+    Container as MuiContainer,
+    Paper,
+    TextField,
+    Typography,
+    useMediaQuery,
+    useTheme
+} from "@mui/material";
+import { green, grey } from "@mui/material/colors";
+import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { Box, Button, FormControl, FormGroup, TextField } from "@mui/material"
+import LoadingIndicator, { type LoadingIndicatorRef } from "../../components/loading-indicator/Component";
+import { ActionType } from "../../components/modal-informativo/Component";
+import { useNotification } from "../../hooks/useNotification";
+import type UserDTO from "../../model/UserDTO";
+import ApiServices from "../../services/api-service";
 
-import Container from "../../components/container-component/Component"
-import { green } from "@mui/material/colors"
-import type { LoadingIndicatorRef } from "../../components/loading-indicator/Component"
-import LoadingIndicator from "../../components/loading-indicator/Component"
-import { useRef, useState } from "react"
-import { useIsMobile } from "../../hooks/useIsMobile"
-import { useNavigate } from "react-router"
-import type UserDTO from "../../model/UserDTO"
-import ApiServices from "../../services/api-service"
-
-import { ActionType } from "../../components/modal-informativo/Component"
-import { useNotification } from "../../hooks/useNotification"
-
-
-export type InfoState = {
-    type?: "info" | "success" | "warning" | "error";
-    title: string;
-    icon: React.ReactElement,
-    message: string;
-};
+// --- Configuração da Imagem de Fundo ---
+// Imagem de agricultura (Campo/Soja/Trator) do Unsplash
+const BG_IMAGE_URL = "https://rehagro.com.br/blog/wp-content/uploads/2025/04/capa-agricultura-sustentavel.jpeg";
 
 export const LoginScreen = () => {
- 
-
+    const theme = useTheme();
+    // Breakpoint 'sm' geralmente é 600px. Abaixo disso é mobile.
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const navigate = useNavigate();
     const { showNotification, NotificationModal } = useNotification();
-
-    const navigation = useNavigate()
-
-    const isMobile = useIsMobile();
-
     const loaderRef = useRef<LoadingIndicatorRef>(null);
 
+    const [showPassword, setShowPassword] = useState(false);
     const [user, setUser] = useState<UserDTO>({
         login: "",
         password: "",
         avatar: ""
     });
 
-    const handleLogin = (e: any) => {
-
+    const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setUser((prev) => ({
-            ...prev,
-            [name]: value
-        }))
-
-    }
-    const fieldStyle = {
-        width: '100%',
-        height: 48,
+        setUser((prev) => ({ ...prev, [name]: value }));
     };
-    const isLoginValid = () => {
-        if (user.login === "") {
-        
-            showNotification(
-                ActionType.Warning,
-                "Login invalido",
-                "",
-                () => {
-                    console.log("modal fehcado")
-                }
-            );
+
+    const handleClickShowPassword = () => setShowPassword((show) => !show);
+    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+    };
+
+    const validateForm = (): boolean => {
+        if (!user?.login.trim()) {
+            showNotification(ActionType.Warning, "Login inválido", "Por favor, preencha o campo de login.", () => {});
             return false;
         }
-
-        if (user.password === "") {
- 
-            showNotification(
-                ActionType.Warning,
-                "Senha não informada",
-                "",
-                () => {
-
-                }
-            );
+        if (!user?.password.trim()) {
+            showNotification(ActionType.Warning, "Senha vazia", "Por favor, informe sua senha.", () => {});
             return false;
         }
         return true;
-    }
-
-
-    const submitLogin = async () => {
-
-        if (isLoginValid()) {
-            loaderRef.current?.start();
-            try {
-                const { status, success, data, message } = await ApiServices.login(user)
-                console.log(status, success, data)
-                if (success) {
-
-
-                    localStorage.setItem("token", data.token);
-                    localStorage.setItem("user", data.fullName)
-                    localStorage.setItem("login",data.login)
-                    localStorage.setItem("avatar", data.avatar);
-                    navigation("/lista_espera")
-                }
-
-                showNotification(
-                    ActionType.Warning,
-                    `${message}`,
-                    "",
-                    () => {
-                        console.log("modal fehcado")
-                    }
-                )
-            } catch (error) {
-                console.log(error)
-
-                showNotification(
-                    ActionType.Warning,
-                    `"Não e permitido login nulo`,
-                    "",
-                    () => {
-                        console.log("modal fehcado")
-                    }
-                )
-
-                loaderRef.current?.done()
-            } finally {
-                loaderRef.current?.done()
-            }
-        }
-
-    }
-
-    const focused = {
-
-        "& input::placeholder": {
-            color: "#999999",
-            opacity: 1,
-            fontStyle: "italic",
-            fontWeight: 400,
-            fontSize: "0.9rem",
-        },
-        "& .MuiOutlinedInput-root": {
-            height: isMobile ? 40 : 60,
-            width: isMobile ? '100%' : 400,
-            maxWidth: '100%',
-            "&.Mui-focused fieldset": {
-                borderColor: green[500],
-                borderWidth: 2,
-            },
-        },
-        "& label.Mui-focused": {
-            color: green[500],
-        },
-        "& input": {
-            fontSize: 18,
-            textShadow: `0 0 1px rgba(0,0,0,0.1),0 0 2px rgba(0,0,0,0.1)`,
-        }
-
     };
 
+    const submitLogin = async () => {
+        if (!validateForm()) return;
+
+        loaderRef.current?.start();
+        
+        try {
+            const { success, data, message } = await ApiServices.login(user);
+
+            if (success && data) {
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", data.fullName);
+                localStorage.setItem("login", data.login);
+                localStorage.setItem("avatar", data.avatar || ""); 
+                navigate("/lista_espera");
+            } else {
+                showNotification(ActionType.Warning, "Falha no Login", message || "Credenciais inválidas", () => {});
+            }
+        } catch (error) {
+            console.error(error);
+            showNotification(ActionType.Error, "Erro de Conexão", "Não foi possível conectar ao servidor.", () => {});
+        } finally {
+            loaderRef.current?.done();
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') submitLogin();
+    };
 
     return (
-
-        <Box
-            sx={{
-
-                width: {
-                    xs: '100%',    // telas pequenas (mobile) o Box usa 100% da largura do container
-                    sm: 'auto',    // telas maiores o width é automático (não fixo)
-                },
-                maxWidth: {
-                    xs: 500,       // no mobile, máximo 500px
-                    sm: '80%',     // no desktop pode ocupar até 80% da largura do pai (ou outro valor que desejar)
-                    md: 500,       // em telas maiores, limite máximo de 800px
-                },
-                height: {
-                    xs: 500,       // no mobile, máximo 500px
-                    sm: '80%',     // no desktop pode ocupar até 80% da largura do pai (ou outro valor que desejar)
-                    md: 800,
-                },
-
-                mx: 'auto',     // centraliza horizontalmente
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center"
-            }}
-        >
+        <Box sx={{
+            minHeight: '100vh',
+            width: '100%',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            
+            // --- Lógica do Background ---
+          backgroundColor: isMobile ? "#FFFFFF" : "rgba(255, 255, 255, 0.92)",
+            backgroundImage: isMobile ? "none" : `url(${BG_IMAGE_URL})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            // O blend mode escurece a imagem para o cartão branco se destacar mais
+            backgroundBlendMode: isMobile ? 'normal' : 'darken', 
+        }}>
             <LoadingIndicator ref={loaderRef} />
-            <img src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logo.jpg?raw=true" alt="" width={"90%"} />
-
             {NotificationModal}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-                <Container isElement={false}>
-                    <FormGroup
-                        sx={{
-                            width: '100%',
-                            maxWidth: isMobile ? 260 : 450, 
-                            mx: 'auto',               
-                            mt: 2,
+
+            {/* Mudei maxWidth para 'sm' (small) que é maior que 'xs' (extra small) */}
+            <MuiContainer maxWidth="sm" disableGutters={isMobile}>
+                <Paper 
+                    elevation={isMobile ? 0 : 12} // Sombra mais forte no desktop
+                    sx={{
+                        // Padding aumentado no desktop (6 = 48px)
+                        padding: isMobile ? 3 : 6, 
+                        borderRadius: isMobile ? 0 : 4,
+                        
+                        // --- Efeito Glassmorphism (Vidro) ---
+                        backgroundColor: isMobile 
+                            ? "#FFFFFF" 
+                            : "rgba(255, 255, 255, 0.41)", // Leve transparência
+                        backdropFilter: isMobile ? "none" : "blur(12px)", // Borra o fundo atrás do cartão
+                        
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        
+                        // Altura total no mobile para centralizar
+                        minHeight: isMobile ? '100vh' : 'auto', 
+                        justifyContent: isMobile ? 'center' : 'flex-start'
+                    }}
+                >
+                    {/* LOGO AREA */}
+                    <Box 
+                        sx={{ 
+                            mb: 5, // Margem aumentada
+                            textAlign: 'center',
+                            width: '100%'
                         }}
                     >
-                        <FormControl sx={{ mb: {xs:1,sm:2} }}>
-                            <TextField
-                                id="my-input"
-                                placeholder="LOGIN"
-                                name="login"
-                                onChange={handleLogin}
-                                sx={{ ...fieldStyle, ...focused }}
-                                variant="outlined"
-                            />
-                        </FormControl>
+                        {/* Se tiver a imagem importada, use aqui. Caso contrário, placeholder */}
+                        <img 
+                            src="src/assets/logo/logo.jpg" 
+                            alt="Agrion Logo"
+                            style={{ 
+                                maxWidth: isMobile ? '200px' : '380px', // Logo maior no desktop
+                                width: '100%', 
+                                height: 'auto',
+                                marginBottom: '16px'
+                            }} 
+                        />
+           
+                    </Box>
 
-                          <FormControl sx={{ mb: {xs:1,sm:2} }}>
-                            <TextField
-                                id="my-password"
-                                placeholder="SENHA"
-                                name="password"
-                                onChange={handleLogin}
-                                type="password"
-                                sx={{ ...fieldStyle, ...focused }}
-                                variant="outlined"
-                            />
-                        </FormControl>
-                    </FormGroup>
-                </Container>
+                    {/* FORM AREA */}
+                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        
+                        <TextField
+                            fullWidth
+                            placeholder="Usuário"
+                            name="login"
+                            value={user.login}
+                            onChange={handleLoginChange}
+                            onKeyDown={handleKeyDown}
+                            variant="outlined"
+                            autoComplete="username"
+                            // Aumentando a altura visual do input no desktop
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    paddingLeft: 1,
+                                         borderRadius:3,
+                                    height: isMobile ? 50 : 56, // Input ligeiramente mais alto
+                                    backgroundColor: isMobile ? grey[50] : "#FFFFFF"
+                                },
+                                "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                                    borderColor: green[500],
+                                    borderWidth: 2
+                                },
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <PersonIcon sx={{ color: green[600], fontSize: 28 }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
 
-                <Button sx={{
-                    width: isMobile ? 180 : 400, height: 48,
-                    "&:hover": {
-                        backgroundColor: "black",
-                        fontWeight: 200,
-                        filter: "brightness(0.9)",
-                    },
-                    fontWeight: 200,
-                    backgroundColor: green[500],
-                    marginBottom: 2
-                }}
-                    variant="contained"
-                    onClick={submitLogin}>Fazer Login</Button>
+                        <TextField
+                            fullWidth
+                            placeholder="Senha"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={user.password}
+                            onChange={handleLoginChange}
+                            onKeyDown={handleKeyDown}
+                            variant="outlined"
+                            autoComplete="current-password"
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    paddingLeft: 1,
+                                    borderRadius:3,
+                                    height: isMobile ? 50 : 56,
+                                    backgroundColor: isMobile ? grey[50] : "#FFFFFF"
+                                },
+                                "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                                    borderColor: green[500],
+                                    borderWidth: 2
+                                },
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <LockIcon sx={{ color: green[600], fontSize: 28 }} />
+                                    </InputAdornment>
+                                ),
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={handleClickShowPassword}
+                                            onMouseDown={handleMouseDownPassword}
+                                            edge="end"
+                                        >
+                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
 
+                        <Button 
+                            variant="contained"
+                            onClick={submitLogin}
+                            fullWidth
+                            size="large"
+                            sx={{
+                                mt: 2,
+                                height: 56, // Botão mais alto
+                                borderRadius: 2,
+                                backgroundColor: green[700],
+                                fontWeight: "800",
+                                fontSize: "1.1rem", // Texto maior
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                boxShadow: "0 6px 20px rgba(46, 125, 50, 0.25)",
+                                transition: "all 0.3s ease",
+                                "&:hover": {
+                                    backgroundColor: green[900],
+                                    transform: "translateY(-2px)", // Efeito de elevação leve
+                                    boxShadow: "0 8px 25px rgba(46, 125, 50, 0.4)",
+                                },
+                            }}
+                        >
+                            ENTRAR
+                        </Button>
+                    </Box>
 
-            </div>
+                    {/* FOOTER */}
+                    <Box sx={{ mt: 6, opacity: 0.7 }}>
+                        <Typography variant="caption" color="textSecondary" align="center" display="block">
+                            © {new Date().getFullYear()} Agrion. Sistema de Controle.
+                        </Typography>
+                    </Box>
+
+                </Paper>
+            </MuiContainer>
         </Box>
-    )
-}
+    );
+};
