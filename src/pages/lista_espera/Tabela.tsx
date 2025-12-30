@@ -110,7 +110,7 @@ const TableRowItem = memo(({
             sx={{
                 ...STYLES.statusBtn,
                 cursor: "pointer",
-                backgroundColor:status?.find(s => s.descricao === row.status)?.corHexadecimal,
+                backgroundColor:"red",
             }}
         >
             {row.status}
