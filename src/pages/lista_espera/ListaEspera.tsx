@@ -43,8 +43,8 @@ function createData(
     };
 }
 export type ChangeEventTarget = {
-  name?: string;
-  value: string;
+    name?: string;
+    value: string;
 };
 interface ListaEsperaProps {
     isModalOpen: boolean;
@@ -114,12 +114,12 @@ const ListaEspera = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
 
     const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
-const handleOrdenar = (tipo: 'asc' | 'desc') => {
+    const handleOrdenar = (tipo: 'asc' | 'desc') => {
         setOrdem(tipo);
-        
-        // Criamos uma cópia do array para não mutar o estado diretamente
+
+   
         const sortedRows = [...rows].sort((a, b) => {
-            // Tratamento para datas nulas ou undefined (coloca no final ou inicio dependendo da logica)
+          
             const dataA = a.dataCriacao ? new Date(a.dataCriacao).getTime() : 0;
             const dataB = b.dataCriacao ? new Date(b.dataCriacao).getTime() : 0;
 
@@ -144,14 +144,14 @@ const handleOrdenar = (tipo: 'asc' | 'desc') => {
         }
     };
 
-    const buscarToddosStatus = async () => {
+    const buscarTodosStatus = async () => {
         const { data, success } = await ApiServices.buscarTodosStatus();
         if (success) {
             setStatus(data);
         }
     }
 
-const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
+    const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
         if (isBackgroundFetching) setIsRefreshing(true)
         setFiltroAtivo(null);
         const { success, data } = await ApiServices.buscarTodos();
@@ -161,9 +161,9 @@ const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
             );
             // Aplica ordenação padrão (desc) ao carregar
             const sorted = novaRows.sort((a: any, b: any) => {
-                 const dA = a.dataCriacao ? new Date(a.dataCriacao).getTime() : 0;
-                 const dB = b.dataCriacao ? new Date(b.dataCriacao).getTime() : 0;
-                 return dB - dA;
+                const dA = a.dataCriacao ? new Date(a.dataCriacao).getTime() : 0;
+                const dB = b.dataCriacao ? new Date(b.dataCriacao).getTime() : 0;
+                return dB - dA;
             });
             setRows(sorted);
             setOrdem('desc'); // Reseta visualmente para desc
@@ -191,7 +191,7 @@ const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
     useEffect(() => {
         loaderRef.current?.start()
         fetchTodos()
-        buscarToddosStatus()
+        buscarTodosStatus()
         loaderRef.current?.done()
     }, [setIsModalOpen, isModalOpen])
 
@@ -242,39 +242,39 @@ const fetchTodos = useCallback(async (isBackgroundFetching = false) => {
 
 
     const handleRowClick = (row: CadastroDTO) => {
-  
+
         setCadastro(row);    // Preenche o formulário com os dados da linha
         offcanvasRef.current?.open();
     };
     const handleClearForm = () => {
-  
+
         setCadastro(getCadastroVazio());
     };
 
     const errors = {};
 
-const handleCadastro = useCallback(
-  (
-    e:
-      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      | SelectChangeEvent
-  ) => {
-    const target = e.target as ChangeEventTarget;
-    const { name, value } = target;
+    const handleCadastro = useCallback(
+        (
+            e:
+                | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                | SelectChangeEvent
+        ) => {
+            const target = e.target as ChangeEventTarget;
+            const { name, value } = target;
 
-    if (!name) return;
+            if (!name) return;
 
-    setCadastro((prev) => {
-      if (!prev) return null;
+            setCadastro((prev) => {
+                if (!prev) return null;
 
-      return {
-        ...prev,
-        [name]: value
-      };
-    });
-  },
-  []
-);
+                return {
+                    ...prev,
+                    [name]: value
+                };
+            });
+        },
+        []
+    );
     const submitCadastro = async () => {
         if (!cadastro) return;
 
@@ -495,12 +495,12 @@ const handleCadastro = useCallback(
                                     </Typography>
                                 </Box>
                             ))}
-                                <Divider sx={{ my: 2 }} />
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Divider sx={{ my: 2 }} />
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    <SortIcon fontSize="small"/> Ordenar por data:
+                                    <SortIcon fontSize="small" /> Ordenar por data:
                                 </Typography>
-                                
+
                                 <Chip
                                     icon={<ArrowDownwardIcon />}
                                     label="Mais recentes"
@@ -522,9 +522,9 @@ const handleCadastro = useCallback(
                                 />
                             </Box>
                         </Box>
-                        
+
                     )}
-                
+
                 </Paper>
 
                 <LeftModal

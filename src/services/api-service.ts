@@ -254,7 +254,7 @@ const ApiServices = {
   },
   async buscarTodosStatus(){
   try {
-      const response = await interceptor.get("cadastro/BuscarTodosStatus");
+      const response = await interceptor.get("cadastro/buscarTodosStatus");
       return {
         success: true,
         status: response.status,

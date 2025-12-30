@@ -78,7 +78,9 @@ const cadastroFields: CadastroField[] = [
 
   { name: "marca", label: "Marca", placeholder: "Ex: Volvo" },
 ];
-
+if (!cadastro) {
+  return null; 
+}
   return (
        <Drawer
       anchor="left"
@@ -145,7 +147,7 @@ const cadastroFields: CadastroField[] = [
         size="small"
         fullWidth
         name={field.name}
-        value={cadastro?.[field.name] || ""}
+        value={cadastro[field.name] || ""}
         onChange={handleCadastro}
         sx={{
           backgroundColor: "#fff",
@@ -168,7 +170,7 @@ const cadastroFields: CadastroField[] = [
         fullWidth
         name={field.name}
         placeholder={field.placeholder}
-        value={cadastro?.[field.name] || ""}
+        value={cadastro[field.name] || ""}
         onChange={handleCadastro}
         error={!!field.error}
         helperText={field.error ? field.helper : ""}
