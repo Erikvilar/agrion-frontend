@@ -142,7 +142,7 @@ export const LoginScreen = () => {
 
                     <Box sx={{ mb: 5, textAlign: 'center', width: '100%' }}>
                         <img
-                            src="../../assets/logo/logo.jpg"
+                            src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logoAgrion.jpg?raw=true"
                             alt="Agrion Logo"
                             style={{
                                 maxWidth: isMobile ? '180px' : '280px',
