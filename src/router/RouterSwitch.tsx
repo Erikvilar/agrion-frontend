@@ -1,11 +1,11 @@
-import { Route, Routes, useLocation, useNavigate, type To } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate} from "react-router-dom";
 import { useIsMobile } from "../hooks/useIsMobile";
 import Adaptive from "../components/adaptive-component/Component";
 import MenuLeft from "../components/menu/Component";
-import styles from "./route.module.css"
+
 import { LoginScreen } from "../pages/login/LoginScreen";
 import ListaEspera from "../pages/lista_espera/ListaEspera";
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
 import { useEffect, useState } from "react";
 import Historico from "../pages/historico/Historico";
 import ApiServices from "../services/api-service";
@@ -13,14 +13,12 @@ import type UserDTO from "../model/UserDTO";
 import { useNotification } from "../hooks/useNotification";
 import { ActionType } from "../components/modal-informativo/Component";
 import SuportePage from "../pages/contato_suporte/SuportePage";
-import HistoryIcon from "@mui/icons-material/History";
-import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
+
 
 const RouterSwitch = () => {
 
     const isMobile = useIsMobile();
     const location = useLocation();
-    const token = localStorage.getItem("token");
     const navigation = useNavigate()
     const { showNotification, NotificationModal } = useNotification();
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -39,34 +37,7 @@ const RouterSwitch = () => {
         setIcon(iconAvatar);
     }, [navigation]);
 
-    const ButtonDefault = ({ className, route, children }:
-        {
-            className: string;
-            route: To | number;
-            children: React.ReactNode;
-        }) => {
 
-        return (
-            <button className={className}
-                onClick={() => typeof route === "number" ?
-                    navigation(route) :
-                    navigation(route)}>{children}</button>
-        )
-    }
-    const condicionalRender = (path: string) => {
-        switch (path) {
-            case "/lista_espera":
-                return <div>
-                    <ButtonDefault className={styles.buttonDefault} route={-1} children={(<li><ArrowBackIosNewIcon sx={{ fontSize: 18, marginRight: 1 }} /> Voltar a home</li>)} />
-                     <ButtonDefault className={styles.buttonDefault} route={"/historico"} children={(<li><HistoryIcon sx={{ fontSize: 18, marginRight: 1 }} /> Consultar histórico</li>)} />
-                     <ButtonDefault className={styles.buttonDefault} route={"/suporte"} children={(<li><SupportAgentOutlinedIcon sx={{ fontSize: 18, marginRight: 1 }} /> Contatar suporte</li>)} />
-                </div>
-            case "/":
-               return <></>
-            default:
-                return <ButtonDefault className={styles.buttonDefault} route={-1} children={(<li><ArrowBackIosNewIcon sx={{ fontSize: 18, marginRight: 1 }} /> Voltar</li>)} />
-        }
-    }
 
     const handleLogout = async () => {
         const user = localStorage.getItem("login")
@@ -93,31 +64,11 @@ const RouterSwitch = () => {
     }
 
 
-    const isPageLogin = pathAtual == "/" ? true : false;
+    const isPageLogin = pathAtual == "/";
     return (
 
         <Adaptive>
-            {isMobile ? <MenuLeft avatar={icon} isPageLogin={isPageLogin} setIsOpen={setIsModalOpen} handleLogout={handleLogout}/> :
-                <nav className={styles.navbar}>
-                    <ul>
-                        {condicionalRender(pathAtual)}
-                    </ul>
-                    <div style={{ display: "flex", alignItems: "center" }}>
-
-                        <img src={icon} style={{ marginRight: 20, borderRadius: 360, border: "2px solid green" }} width={40} height={40} />
-
-                        {token != "" ? <button onClick={handleLogout} className={styles.buttonLogout} >
-
-                            <span style={{ color: "white", fontSize: 15, fontWeight: 500 }}>
-                                Fazer logout
-                            </span>
-                        </button> : <></>
-                        }
-
-
-                    </div>
-
-                </nav>}
+            {isMobile ?? ( <MenuLeft avatar={icon} isPageLogin={isPageLogin} setIsOpen={setIsModalOpen} handleLogout={handleLogout}/> )}
 
             {NotificationModal}
 

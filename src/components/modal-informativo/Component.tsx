@@ -56,7 +56,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
       <Grow in={isOpen} timeout={350}>
         <Box
            sx={{
-        backgroundColor: 'white',
+        backgroundColor: "rgb(0,0,0, 0.80)",
         p: isMobile ? 5 : isTablet ? 4.5 : 4,
         borderRadius: 3,
         width: isMobile ? '85%' : isTablet ? '70%' : 609,
@@ -105,7 +105,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
               px: 2,
               maxWidth: "90%",
               textAlign: "center",
-              color: "#444",
+              color: "white",
               fontSize: isMobile ? "1rem" : "1.1rem",
               lineHeight: 1.6,
               letterSpacing: "0.25px"

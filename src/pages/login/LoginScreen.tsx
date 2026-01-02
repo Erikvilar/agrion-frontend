@@ -7,33 +7,31 @@ import {
 import {
     Box,
     Button,
+    Container as MuiContainer,
     IconButton,
     InputAdornment,
-    Container as MuiContainer,
     Paper,
     TextField,
-    Typography,
-    useMediaQuery,
-    useTheme
+    Typography
 } from "@mui/material";
-import { green, grey } from "@mui/material/colors";
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import LoadingIndicator, { type LoadingIndicatorRef } from "../../components/loading-indicator/Component";
 import { ActionType } from "../../components/modal-informativo/Component";
+import { useIsMobile } from "../../hooks/useIsMobile";
 import { useNotification } from "../../hooks/useNotification";
 import type UserDTO from "../../model/UserDTO";
 import ApiServices from "../../services/api-service";
+import { APP_THEME } from "../../styles/themeConstans";
 
-// --- Configuração da Imagem de Fundo ---
-// Imagem de agricultura (Campo/Soja/Trator) do Unsplash
 const BG_IMAGE_URL = "https://rehagro.com.br/blog/wp-content/uploads/2025/04/capa-agricultura-sustentavel.jpeg";
 
 export const LoginScreen = () => {
-    const theme = useTheme();
-    // Breakpoint 'sm' geralmente é 600px. Abaixo disso é mobile.
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+    const theme = APP_THEME['default'];
+
+    const isMobile = useIsMobile();
     const navigate = useNavigate();
     const { showNotification, NotificationModal } = useNotification();
     const loaderRef = useRef<LoadingIndicatorRef>(null);
@@ -71,15 +69,15 @@ export const LoginScreen = () => {
         if (!validateForm()) return;
 
         loaderRef.current?.start();
-        
+
         try {
             const { success, data, message } = await ApiServices.login(user);
 
             if (success && data) {
                 localStorage.setItem("token", data.token);
-                localStorage.setItem("user", data.fullName);
+                localStorage.setItem("user", data.fullName || "");
                 localStorage.setItem("login", data.login);
-                localStorage.setItem("avatar", data.avatar || ""); 
+                localStorage.setItem("avatar", data.avatar || "");
                 navigate("/lista_espera");
             } else {
                 showNotification(ActionType.Warning, "Falha no Login", message || "Credenciais inválidas", () => {});
@@ -103,68 +101,67 @@ export const LoginScreen = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            
-            // --- Lógica do Background ---
-          backgroundColor: isMobile ? "#FFFFFF" : "rgba(255, 255, 255, 0.92)",
-            backgroundImage: isMobile ? "none" : `url(${BG_IMAGE_URL})`,
+            position: "relative",
+
+            backgroundImage: `url(${BG_IMAGE_URL})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            // O blend mode escurece a imagem para o cartão branco se destacar mais
-            backgroundBlendMode: isMobile ? 'normal' : 'darken', 
+
+            "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: "rgba(0,0,0,0.7)",
+                backdropFilter: "blur(2px)",
+                zIndex: 0
+            }
         }}>
             <LoadingIndicator ref={loaderRef} />
             {NotificationModal}
 
-            {/* Mudei maxWidth para 'sm' (small) que é maior que 'xs' (extra small) */}
-            <MuiContainer maxWidth="sm" disableGutters={isMobile}>
-                <Paper 
-                    elevation={isMobile ? 0 : 12} // Sombra mais forte no desktop
+            <MuiContainer maxWidth="sm" disableGutters={isMobile} sx={{ position: "relative", zIndex: 1 }}>
+                <Paper
+                    elevation={isMobile ? 0 : 8}
                     sx={{
-                        // Padding aumentado no desktop (6 = 48px)
-                        padding: isMobile ? 3 : 6, 
+                        padding: isMobile ? 3 : 6,
                         borderRadius: isMobile ? 0 : 4,
-                        
-                        // --- Efeito Glassmorphism (Vidro) ---
-                        backgroundColor: isMobile 
-                            ? "#FFFFFF" 
-                            : "rgba(255, 255, 255, 0.41)", // Leve transparência
-                        backdropFilter: isMobile ? "none" : "blur(12px)", // Borra o fundo atrás do cartão
-                        
+                        backgroundColor: "rgba(255,255,255, 0.1)",
+                        backdropFilter: "blur(16px)",
+                        border: "none",
+
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        
-                        // Altura total no mobile para centralizar
-                        minHeight: isMobile ? '100vh' : 'auto', 
-                        justifyContent: isMobile ? 'center' : 'flex-start'
+
+                        minHeight: isMobile ? '100vh' : 'auto',
+                        justifyContent: isMobile ? 'center' : 'flex-start',
+                        transition: "all 0.3s ease"
                     }}
                 >
-                    {/* LOGO AREA */}
-                    <Box 
-                        sx={{ 
-                            mb: 5, // Margem aumentada
-                            textAlign: 'center',
-                            width: '100%'
-                        }}
-                    >
-                        {/* Se tiver a imagem importada, use aqui. Caso contrário, placeholder */}
-                        <img 
-                            src="src/assets/logo/logo.jpg" 
+
+                    <Box sx={{ mb: 5, textAlign: 'center', width: '100%' }}>
+                        <img
+                            src="../../assets/logo/logo.jpg"
                             alt="Agrion Logo"
-                            style={{ 
-                                maxWidth: isMobile ? '200px' : '380px', // Logo maior no desktop
-                                width: '100%', 
+                            style={{
+                                maxWidth: isMobile ? '180px' : '280px',
+                                width: '100%',
                                 height: 'auto',
-                                marginBottom: '16px'
-                            }} 
+                                marginBottom: '16px',
+                                borderRadius: "8px",
+                                mixBlendMode: "multiply",
+                                filter: "brightness(1.2) saturate(1.5) contrast(1.1)"
+                            }}
                         />
-           
+                        <Typography variant="body2" sx={{ color: "white" }}>
+                            Faça login para acessar o painel
+                        </Typography>
                     </Box>
 
-                    {/* FORM AREA */}
+
                     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        
+
                         <TextField
                             fullWidth
                             placeholder="Usuário"
@@ -174,23 +171,30 @@ export const LoginScreen = () => {
                             onKeyDown={handleKeyDown}
                             variant="outlined"
                             autoComplete="username"
-                            // Aumentando a altura visual do input no desktop
                             sx={{
                                 "& .MuiOutlinedInput-root": {
-                                    paddingLeft: 1,
-                                         borderRadius:3,
-                                    height: isMobile ? 50 : 56, // Input ligeiramente mais alto
-                                    backgroundColor: isMobile ? grey[50] : "#FFFFFF"
+                                    borderRadius: 3,
+                                    height: 56,
+                                    backgroundColor: "rgb(255,255,255,0.1)",
+                                    color: "white",
+                                    transition: "all 0.2s",
+                                    "& fieldset": { borderColor: "white" },
+                                    "&:hover fieldset": { borderColor: "white" },
+                                    "&.Mui-focused fieldset": {
+                                        borderColor: theme.border.focus,
+                                        borderWidth: 2,
+                                        backgroundColor:"transparent"},
                                 },
-                                "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                                    borderColor: green[500],
-                                    borderWidth: 2
-                                },
+                                "& input::placeholder": {
+                                    color: "white",
+                                    opacity: 1
+                                }
                             }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <PersonIcon sx={{ color: green[600], fontSize: 28 }} />
+
+                                        <PersonIcon sx={{ color: theme.text.secondary }} />
                                     </InputAdornment>
                                 ),
                             }}
@@ -208,20 +212,27 @@ export const LoginScreen = () => {
                             autoComplete="current-password"
                             sx={{
                                 "& .MuiOutlinedInput-root": {
-                                    paddingLeft: 1,
-                                    borderRadius:3,
-                                    height: isMobile ? 50 : 56,
-                                    backgroundColor: isMobile ? grey[50] : "#FFFFFF"
+                                    borderRadius: 3,
+                                    height: 56,
+                                    backgroundColor: "rgb(255,255,255,0.1)",
+                                    color: "white",
+                                    transition: "all 0.2s",
+                                    "& fieldset": { borderColor: "white" },
+                                    "&:hover fieldset": { borderColor: "white" },
+                                    "&.Mui-focused fieldset": {
+                                        borderColor: theme.border.focus,
+                                        borderWidth: 2
+                                    },
                                 },
-                                "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                                    borderColor: green[500],
-                                    borderWidth: 2
-                                },
+                                "& input::placeholder": {
+                                    color: "white",
+                                    opacity: 1
+                                }
                             }}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <LockIcon sx={{ color: green[600], fontSize: 28 }} />
+                                        <LockIcon sx={{ color: theme.text.secondary }} />
                                     </InputAdornment>
                                 ),
                                 endAdornment: (
@@ -231,6 +242,7 @@ export const LoginScreen = () => {
                                             onClick={handleClickShowPassword}
                                             onMouseDown={handleMouseDownPassword}
                                             edge="end"
+                                            sx={{ color: theme.text.secondary }}
                                         >
                                             {showPassword ? <VisibilityOff /> : <Visibility />}
                                         </IconButton>
@@ -239,42 +251,45 @@ export const LoginScreen = () => {
                             }}
                         />
 
-                        <Button 
+                        <Button
                             variant="contained"
                             onClick={submitLogin}
                             fullWidth
                             size="large"
                             sx={{
-                                mt: 2,
-                                height: 56, // Botão mais alto
+                                mt: 1,
+                                height: 56,
                                 borderRadius: 2,
-                                backgroundColor: green[700],
+                                backgroundColor: "#48b301",
+                                color: "#FFFFFF",
                                 fontWeight: "800",
-                                fontSize: "1.1rem", // Texto maior
+                                fontSize: "1rem",
                                 letterSpacing: 1,
                                 textTransform: "uppercase",
-                                boxShadow: "0 6px 20px rgba(46, 125, 50, 0.25)",
+                                boxShadow: "0 4px 14px 0 rgba(0,0,0,0.15)",
                                 transition: "all 0.3s ease",
                                 "&:hover": {
-                                    backgroundColor: green[900],
-                                    transform: "translateY(-2px)", // Efeito de elevação leve
-                                    boxShadow: "0 8px 25px rgba(46, 125, 50, 0.4)",
+                                    backgroundColor: theme.border.focus,
+                                    filter: "brightness(0.9)",
+                                    transform: "translateY(-2px)",
+                                    boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
                                 },
                             }}
                         >
-                            ENTRAR
+                            ACESSAR SISTEMA
                         </Button>
                     </Box>
 
-                    {/* FOOTER */}
-                    <Box sx={{ mt: 6, opacity: 0.7 }}>
-                        <Typography variant="caption" color="textSecondary" align="center" display="block">
+
+                    <Box sx={{ mt: 6 }}>
+                        <Typography variant="caption" sx={{ color: "white", fontWeight: 500 }} align="center" display="block">
                             © {new Date().getFullYear()} Agrion. Sistema de Controle.
                         </Typography>
                     </Box>
 
                 </Paper>
             </MuiContainer>
+
         </Box>
     );
 };

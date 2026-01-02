@@ -3,7 +3,7 @@ import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 
 interface TempoDeEsperaProps {
-  dataCriacao?: string | Date;
+  dataCriacao?: string | Date | undefined
 }
 
 export const TempoDeEspera = ({ dataCriacao }: TempoDeEsperaProps) => {
@@ -35,5 +35,34 @@ export const TempoDeEspera = ({ dataCriacao }: TempoDeEsperaProps) => {
 
   if (!dataCriacao) return null;
 
-  return <div> Há: {tempoExibido}</div>;
+  const getTimeColor = (dataString: TempoDeEsperaProps): string => {
+    if (!dataString) return 'grey';
+
+    const dataEntrada = new Date(dataString.dataCriacao || "");
+    const agora = new Date();
+
+
+    const diffEmHoras = Math.abs(agora.getTime() - dataEntrada.getTime()) / 36e5;
+
+
+    if (diffEmHoras <= 2) {
+      return '#16a34a';
+    }
+    else if (diffEmHoras <= 9) {
+      return '#ca8a04';
+    }
+    else if (diffEmHoras <= 48) {
+      return '#f97316';
+    }
+    else {
+      return '#dc2626';
+    }
+  };
+  // @ts-ignore
+  const corTexto = getTimeColor(dataCriacao);
+  return <div>
+    Há: <span style={{ color: corTexto, fontWeight: "bold" }}>
+            {tempoExibido}
+        </span>
+  </div>
 };

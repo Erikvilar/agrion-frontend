@@ -40,7 +40,7 @@ interface CadastroVeiculoFormProps {
 }
 
 // Otimização: Estilo constante movido para fora para evitar recriação a cada render
-const inputStyle = { bgcolor: "#fff" };
+const inputStyle = { bgcolor: "transparent",color:"white" };
 type FormChangeEvent =
   | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   | SelectChangeEvent;
@@ -60,10 +60,10 @@ export const CadastroForm = ({
     };
 
     return (
-        <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}>
+        <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%"}}>
 
             {/* --- CABEÇALHO --- */}
-            <Box sx={{ mb: 1 }}>
+            <Box >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" fontWeight={700} color={grey[800]} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {isPreCadastro ? "Agendamento" : "Cadastro comum"}
@@ -80,7 +80,7 @@ export const CadastroForm = ({
                     </Tooltip>
                 </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <FormControlLabel
                         control={
                             <Switch
@@ -92,7 +92,7 @@ export const CadastroForm = ({
                                 }}
                             />
                         }
-                        label={<Typography variant="caption" color="text.secondary">Modo Pré-cadastro (Veículo não chegou)</Typography>}
+                        label={<Typography variant="caption" color={grey[500]}>Modo Pré-cadastro (Veículo não chegou)</Typography>}
                     />
                 </Box>
             </Box>
@@ -109,15 +109,21 @@ export const CadastroForm = ({
                 {/* CONDICIONAL: DATA DE PREVISÃO */}
                 {isPreCadastro && (
                     <Box key="box-previsao" sx={{ gridColumn: '1 / -1' }}>
-                        <Box sx={{ p: 2, border: `1px dashed ${orange[400]}`, borderRadius: 2, bgcolor: orange[50] }}>
+
                             <Typography fontSize="0.8rem" fontWeight="bold" color={orange[800]} sx={{ mb: 1 }}>
                                 Previsão de Chegada
                             </Typography>
                             <TextField
-                                fullWidth size="small" type="datetime-local" name="previsaoChegada"
-                                onChange={handleCadastro} InputLabelProps={{ shrink: true }} sx={inputStyle}
+                                fullWidth size="small" type="datetime-local"  name="previsaoChegada" sx={{
+                                ...inputStyle,
+                                "& input::-webkit-calendar-picker-indicator": {
+                                    backgroundColor:orange[800],
+                                    cursor: "pointer"
+                                }
+                            }}
+                                onChange={handleCadastro} InputLabelProps={{ shrink: true }}
                             />
-                        </Box>
+
                     </Box>
                 )}
 
@@ -130,7 +136,7 @@ export const CadastroForm = ({
                     <TextField
                         fullWidth size="small" name="nomeMotorista" label="Nome do Motorista"
                         placeholder="Nome completo"
-                        value={cadastro?.nomeMotorista || ''} onChange={handleCadastro}
+                        value={cadastro?.nomeMotorista.toLocaleUpperCase() || ''} onChange={handleCadastro}
                         InputProps={{
                             startAdornment: <InputAdornment position="start"><PersonIcon fontSize="small" sx={{ color: grey[400] }} /></InputAdornment>,
                         }}
@@ -307,7 +313,7 @@ export const CadastroForm = ({
                         "&:hover": { background: isPreCadastro ? orange[800] : green[800] },
                     }}
                 >
-                    {isPreCadastro ? "Salvar agendamento" : "Cadastrar"}
+                    Salvar
                 </Button>
             </Box>
         </Box>
