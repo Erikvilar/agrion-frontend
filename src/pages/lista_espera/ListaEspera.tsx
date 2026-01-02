@@ -306,7 +306,7 @@ try{
                 title=""
                 position="left"
                 width={700}
-                currentTheme={theme}  // <--- ADICIONE ESTA LINHA
+                currentTheme={theme}  
             >
                 {/* O FORMULÁRIO AGORA TEM A LÓGICA RESTAURADA */}
                 <CadastroForm
