@@ -1,8 +1,7 @@
-import type UserDTO from "../model/UserDTO";
+import  UserDTO from "@/model/dto/UserDTO";
 import interceptor from "../api/interceptor";
-import type CadastroDTO from "../model/CadastroDTO";
-
-
+import {ConfirmarEntradaDTO} from "@/model/dto/registro/ResponsesDTO";
+import RegistroCadastroDTO from "@/model/dto/registro/RegistroCadastroDTO";
 
 
 const ApiServices = {
@@ -64,31 +63,20 @@ const ApiServices = {
     }
   
   },
-  async cadastrar(cadastro: CadastroDTO) {
+  async cadastrar(cadastro: RegistroCadastroDTO) {
     try {
-      const response = await interceptor.post("cadastro", cadastro);
-      return {
-        success: true,
-        status: response.status,
-        data: response.data,
-
-      };
+      const response = await interceptor.post("preCadastro/cadastrar", cadastro);
+      return response.data;
     } catch (error: any) {
-      if (error.response) {
-        return {
-          success: false,
-          status: error.response.status,
-          message: error.response.data?.message,
-          data: error.response.data || null,
-        };
-      }
 
-      return {
-        success: false,
-        status: 0,
-        message: error.message || "Erro de conexão com o servidor",
-        data: null,
-      };
+      const apiErrorEvent = new CustomEvent('APP_API_ERROR', {
+        detail: {
+          title: error.error || "Erro de Cadastro",
+          message: error.message || "Falha ao processar requisição"
+        }
+      });
+      window.dispatchEvent(apiErrorEvent);
+      throw error;
     }
   },
   async buscarPorDescricao(descricao: string) {
@@ -119,9 +107,37 @@ const ApiServices = {
       };
     }
   },
-  async buscarTodos() {
+  // async buscarTodos() {
+  //   try {
+  //     const response = await interceptor.get("cadastro");
+  //     return {
+  //       success: true,
+  //       status: response.status,
+  //       data: response.data,
+  //
+  //     };
+  //   } catch (error: any) {
+  //     if (error.response) {
+  //       return {
+  //         success: false,
+  //         status: error.response.status,
+  //         message: error.response.data?.message || "Erro desconhecido",
+  //         data: error.response.data || null,
+  //       };
+  //     }
+  //
+  //     return {
+  //       success: false,
+  //       status: 0,
+  //       message: error.message || "Erro de conexão com o servidor",
+  //       data: null,
+  //     };
+  //   }
+  // },
+
+  async buscarTodosPreCadastro() {
     try {
-      const response = await interceptor.get("cadastro");
+      const response = await interceptor.get("preCadastro/visualizar");
       return {
         success: true,
         status: response.status,
@@ -254,7 +270,7 @@ const ApiServices = {
   },
   async buscarTodosStatus(){
   try {
-      const response = await interceptor.get("cadastro/buscarTodosStatus");
+      const response = await interceptor.get("status");
       return {
         success: true,
         status: response.status,
@@ -277,7 +293,38 @@ const ApiServices = {
         data: null,
       };
     }
-  }
 
+
+
+
+
+
+  },
+ async confirmarEntrada(confirmarEntrada:ConfirmarEntradaDTO){
+  try {
+      const response = await interceptor.post("preCadastro/confirmarEntrada",confirmarEntrada);
+      return {
+        success: true,
+        status: response.status,
+        data: response.data,
+      };
+    } catch (error:any) {
+
+      if (error.response) {
+        return {
+          success: false,
+          status: error.response.status,
+          message: error.response.data?.message,
+          data: error.response.data || null,
+        };
+      }
+      return {
+        success: false,
+        status: 0,
+        message: error.message || "Erro de conexão com o servidor",
+        data: null,
+      };
+    }
+  }
 }
 export default ApiServices;

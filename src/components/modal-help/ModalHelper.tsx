@@ -1,4 +1,4 @@
-import React from "react";
+
 import {
     Modal,
     Backdrop,
@@ -8,9 +8,11 @@ import {
     Button,
     alpha
 } from "@mui/material";
-import { useIsMobile } from "../../hooks/useIsMobile";
-// Importe suas constantes de tema. Ajuste o caminho conforme necessário.
-import { APP_THEME, type ThemeMode } from "../../styles/themeConstans";
+import { useIsMobile } from "@/hooks/useIsMobile";
+
+import { APP_THEME, type ThemeMode } from "@/styles/themeConstants";
+// @ts-ignore
+import React from "react";
 
 export const ActionType = {
     Info: "info",
@@ -29,7 +31,6 @@ interface InfoModalProps {
     title: string;
     icon: React.ReactElement;
     message: string | React.ReactNode;
-    // Nova prop para garantir que o modal siga o tema da tela atual
     themeMode?: ThemeMode;
 }
 
@@ -40,7 +41,7 @@ const typeColors: Record<string, string> = {
     error: "#ef4444",   // Vermelho
 };
 
-export const InfoModal: React.FC<InfoModalProps> = ({
+export const InfoModal = ({
                                                         isOpen,
                                                         onClose,
                                                         onConfirm,
@@ -48,11 +49,11 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                                                         title,
                                                         icon,
                                                         message,
-                                                        themeMode = 'light' // Padrão Light, mas aceita 'dark'
-                                                    }) => {
+                                                        themeMode = 'light'
+                                                    }:InfoModalProps) => {
     const isMobile = useIsMobile();
 
-    // Carrega a paleta exata que definimos no themeConstants.ts
+
     const currentTheme = APP_THEME[themeMode];
     const mainColor = typeColors[type];
 

@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Modal, Backdrop, Grow, Box, Typography, Button, useMediaQuery, useTheme } from "@mui/material";
 import { useIsMobile } from "../../hooks/useIsMobile"; // ajusta se necessário
 ''
@@ -28,7 +28,7 @@ const typeColors: Record<string, string> = {
   error: "#dc3545",
 };
 
-export const InfoModal: React.FC<InfoModalProps> = ({
+export const InfoModal= ({
   isOpen,
   onClose,
   onConfirm,
@@ -36,7 +36,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
   title,
   icon,
   message
-}) => {
+}:InfoModalProps ) => {
   const isMobile = useIsMobile();
   const theme = useTheme();
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));

@@ -19,9 +19,10 @@ import {
     type SelectChangeEvent
 } from "@mui/material";
 import { green, grey, orange, red } from "@mui/material/colors";
-import React, { useState } from "react";
-import type CadastroDTO from "../../model/CadastroDTO";
-import type StatusDTO from '../../model/StatusDTO';
+import  { useState } from "react";
+
+import type StatusDTO from '../../model/dto/StatusDTO.ts';
+import RegistroCadastroDTO from "@/model/dto/registro/RegistroCadastroDTO";
 
 interface Errors {
     cpf?: boolean;
@@ -31,15 +32,15 @@ interface Errors {
 }
 
 interface CadastroVeiculoFormProps {
-    cadastro: CadastroDTO | null;
-  handleCadastro: (e: FormChangeEvent) => void;
+    cadastro: RegistroCadastroDTO | null;
+    handleCadastro: (e: FormChangeEvent) => void;
     errors: Errors;
     status: StatusDTO[];
     submitCadastro: (isPreCadastro: boolean) => void;
     clearForm: () => void;
 }
 
-// Otimização: Estilo constante movido para fora para evitar recriação a cada render
+
 const inputStyle = { bgcolor: "transparent",color:"white" };
 type FormChangeEvent =
   | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -53,8 +54,8 @@ export const CadastroForm = ({
     status
 }: CadastroVeiculoFormProps) => {
 
-    const [isPreCadastro, setIsPreCadastro] = useState(false);
-
+    const [isPreCadastro, setIsPreCadastro] = useState(true);
+    status.entries();
     const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setIsPreCadastro(event.target.checked);
     };
@@ -106,28 +107,69 @@ export const CadastroForm = ({
                 gap: 2
             }}>
 
-                {/* CONDICIONAL: DATA DE PREVISÃO */}
-                {isPreCadastro && (
-                    <Box key="box-previsao" sx={{ gridColumn: '1 / -1' }}>
 
-                            <Typography fontSize="0.8rem" fontWeight="bold" color={orange[800]} sx={{ mb: 1 }}>
-                                Previsão de Chegada
+                {isPreCadastro && (
+                    <Box key="box-previsao" sx={{ gridColumn: '1 / -1', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Typography
+                                sx={{
+                                    fontSize: "0.8rem",
+                                    fontWeight: "bold",
+                                    color: cadastro?.confirmado ? grey[500] : orange[800],
+                                }}
+                            >
+                                {cadastro?.confirmado ? "Chegada confirmada em" :"Previsão de chegada" }
                             </Typography>
-                            <TextField
-                                fullWidth size="small" type="datetime-local"  name="previsaoChegada" sx={{
+
+                            {/* Indicador visual de bloqueio */}
+                            {cadastro?.confirmado && (
+                                <Tooltip title="Este campo não pode ser editado após a confirmação">
+                                    <Box component="span" sx={{ display: 'flex', alignItems: 'center', color: grey[500] }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                        </svg>
+                                    </Box>
+                                </Tooltip>
+                            )}
+                        </Box>
+
+                        <TextField
+                            fullWidth
+                            size="small"
+                            type="datetime-local"
+                            name="previsaoChegada"
+                            disabled={cadastro?.confirmado}
+                            sx={{
                                 ...inputStyle,
+
+                                "& .Mui-disabled": {
+                                    bgcolor: grey[100],
+                                    color: grey[600],
+                                    cursor: "not-allowed",
+                                    WebkitTextFillColor: grey[600],
+                                },
                                 "& input::-webkit-calendar-picker-indicator": {
-                                    backgroundColor:orange[800],
-                                    cursor: "pointer"
+                                    filter: cadastro?.confirmado
+                                        ? "grayscale(100%) opacity(30%)"
+                                        : "invert(40%) sepia(90%) saturate(1500%) hue-rotate(10deg) brightness(90%) contrast(100%)",
+                                    cursor: cadastro?.confirmado ? "default" : "pointer"
                                 }
                             }}
-                                onChange={handleCadastro} InputLabelProps={{ shrink: true }}
-                            />
-
+                            value={
+                                cadastro?.previsaoChegada ? (() => {
+                                    const d = new Date(cadastro.previsaoChegada);
+                                    const pad = (n: number) => n.toString().padStart(2, '0');
+                                    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                                })() : ""
+                            }
+                            onChange={handleCadastro}
+                            InputLabelProps={{ shrink: true }}
+                        />
                     </Box>
                 )}
 
-                {/* SEÇÃO 1: MOTORISTA */}
+
                 <Box key="header-motorista" sx={{ gridColumn: '1 / -1', mt: 1 }}>
                     <Typography variant="caption" fontWeight="bold" color={grey[500]}>DADOS DO MOTORISTA</Typography>
                 </Box>
@@ -153,8 +195,14 @@ export const CadastroForm = ({
 
                 <Box key="input-telefone" sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
                     <TextField
-                        fullWidth size="small" name="telefone" label="Whatsapp / Telefone" placeholder="(XX) 99999-9999"
+                        fullWidth size="small" name="telefone" label="Telefone" placeholder="(XX) 99999-9999"
                         value={cadastro?.telefone || ''} onChange={handleCadastro}
+                    />
+                </Box>
+                <Box key="input-telefone" sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
+                    <TextField
+                        fullWidth size="small" name="origem" label="Origem" placeholder="CIDADE-SIGLA"
+                        value={cadastro?.origem || ''} onChange={handleCadastro}
                     />
                 </Box>
 
@@ -197,8 +245,8 @@ export const CadastroForm = ({
 
                 <Box key="input-peso" sx={{ gridColumn: { xs: 'span 1', md: 'span 4' } }}>
                     <TextField
-                        fullWidth size="small" name="pesoVazio" label="Tara (Kg)" placeholder="0" type="number"
-                        value={cadastro?.pesoVazio || ''} onChange={handleCadastro}
+                        fullWidth size="small" name="peso" label="Tara (Kg)" placeholder="0" type="number"
+                        value={cadastro?.peso || ''} onChange={handleCadastro}
                         InputProps={{
                             endAdornment: <InputAdornment position="end">kg</InputAdornment>,
                         }}
@@ -213,8 +261,8 @@ export const CadastroForm = ({
 
                 <Box key="input-ordem" sx={{ gridColumn: { xs: 'span 1', md: 'span 4' } }}>
                     <TextField
-                        fullWidth size="small" name="numeroOrdem" label="Nº Ordem" placeholder="000123" type="number"
-                        value={cadastro?.numeroOrdem || ''} onChange={handleCadastro}
+                        fullWidth size="small" name="ordem" label="Nº Ordem" placeholder="000123" type="number"
+                        value={cadastro?.ordem || ''} onChange={handleCadastro}
                         InputProps={{
                             startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" sx={{ color: grey[400] }} /></InputAdornment>,
                         }}
@@ -232,10 +280,9 @@ export const CadastroForm = ({
                     <FormControl fullWidth size="small">
                         <Typography fontSize="0.75rem" fontWeight={600} color={grey[600]} sx={{ mb: 0.5 }}>Tipo de Produto</Typography>
                         <Select
-                            name="tipoProduto" displayEmpty
-                            value={cadastro?.tipoProduto || ""} onChange={handleCadastro}
+                            name="tipo"
+                            value={cadastro?.tipo || ""} onChange={handleCadastro}
                         >
-                            {/* ADICIONADO KEY EXPLICITA PARA EVITAR ERRO DE CHAVE DUPLICADA "2" */}
                             <MenuItem key="default" value="" disabled>Selecione...</MenuItem>
                             <MenuItem key="granel" value="GRANEL">GRANEL</MenuItem>
                             <MenuItem key="bags" value="BAGS">BAGS</MenuItem>
@@ -243,45 +290,41 @@ export const CadastroForm = ({
                         </Select>
                     </FormControl>
                 </Box>
-            <Box key="select-status" sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
-    <FormControl fullWidth size="small">
-        <Typography fontSize="0.75rem" fontWeight={600} color={grey[600]} sx={{ mb: 0.5 }}>
-            Status
-        </Typography>
-        <Select
-            name="status"
-            displayEmpty
-            // O valor do Select é o estado atual do formulário
-            value={cadastro?.status || ""} 
-            onChange={handleCadastro}
-        >
-            <MenuItem value="" disabled>
-                Selecione...
-            </MenuItem>
-            
-            {/* Uso de status?.map para evitar erro se a lista ainda for undefined.
-               Ajuste nos values e no texto de exibição.
-            */}
-            {status?.map((item) => (
-                <MenuItem key={item.id} value={item.descricao}>
-                    {/* (Opcional) Bolinha com a cor do status */}
-                    <Box 
-                        component="span" 
-                        sx={{ 
-                            width: 8, 
-                            height: 8, 
-                            borderRadius: '50%', 
-                            backgroundColor: item.corHexadecimal, 
-                            display: 'inline-block', 
-                            mr: 1 
-                        }} 
-                    />
-                    {item.descricao}
-                </MenuItem>
-            ))}
-        </Select>
-    </FormControl>
-</Box>
+
+                {/*<Box key="select-status" sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>*/}
+                {/*    <FormControl fullWidth size="small">*/}
+                {/*        <Typography fontSize="0.75rem" fontWeight={600} color={grey[600]} sx={{ mb: 0.5 }}>*/}
+                {/*            Status*/}
+                {/*        </Typography>*/}
+                {/*        <Select*/}
+                {/*            name="status"*/}
+                {/*            displayEmpty*/}
+                {/*            value={cadastro? || ""}*/}
+                {/*            onChange={handleCadastro}*/}
+                {/*        >*/}
+                {/*            <MenuItem value="" disabled>*/}
+                {/*                Selecione...*/}
+                {/*            </MenuItem>*/}
+                {/*            {status?.map((item) => (*/}
+                {/*                <MenuItem key={item.id} value={item.descricao}>*/}
+                {/*                    <Box*/}
+                {/*                        component="span"*/}
+                {/*                        sx={{*/}
+                {/*                            width: 8,*/}
+                {/*                            height: 8,*/}
+                {/*                            borderRadius: '50%',*/}
+                {/*                            backgroundColor: item.corHexadecimal,*/}
+                {/*                            display: 'inline-block',*/}
+                {/*                            mr: 1*/}
+                {/*                        }}*/}
+                {/*                    />*/}
+                {/*                    {item.descricao}*/}
+                {/*                </MenuItem>*/}
+                {/*            ))}*/}
+                {/*        </Select>*/}
+                {/*    </FormControl>*/}
+                {/*</Box>*/}
+
                 <Box key="select-operacao" sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' } }}>
                     <FormControl fullWidth size="small">
                         <Typography fontSize="0.75rem" fontWeight={600} color={grey[600]} sx={{ mb: 0.5 }}>Tipo de Operação</Typography>
@@ -289,7 +332,6 @@ export const CadastroForm = ({
                             name="operacao" displayEmpty
                             value={cadastro?.operacao || ""} onChange={handleCadastro}
                         >
-                            {/* ADICIONADO KEY EXPLICITA PARA EVITAR ERRO DE CHAVE DUPLICADA "2" */}
                             <MenuItem key="default-op" value="" disabled>Selecione...</MenuItem>
                             <MenuItem key="carregamento" value="CARREGAMENTO">CARREGAMENTO</MenuItem>
                             <MenuItem key="descarregamento" value="DESCARREGAMENTO">DESCARREGAMENTO</MenuItem>
@@ -313,7 +355,7 @@ export const CadastroForm = ({
                         "&:hover": { background: isPreCadastro ? orange[800] : green[800] },
                     }}
                 >
-                    Salvar
+                    {cadastro?.identificador ? "ATUALIZANDO":"SALVAR"}
                 </Button>
             </Box>
         </Box>

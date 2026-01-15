@@ -1,11 +1,11 @@
 
-import { ActionType, InfoModal, type ActionTypeType } from "../components/modal-informativo/Component";
+import { ActionType, InfoModal, type ActionTypeType } from "@/components/modal-informativo/Component";
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import { Box, Button } from "@mui/material";
-import type React from "react";
+
 import { grey } from "@mui/material/colors";
 
 

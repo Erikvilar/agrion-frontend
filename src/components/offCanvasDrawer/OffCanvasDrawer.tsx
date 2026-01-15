@@ -6,8 +6,8 @@ import {
   IconButton,
   Typography
 } from '@mui/material';
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { type ColorPalette } from '../../styles/themeConstans';
+import{ forwardRef, useImperativeHandle, useState } from 'react';
+import { type ColorPalette } from '@/styles/themeConstants';
 
 export interface OffcanvasRef {
   open: () => void;

@@ -42,7 +42,7 @@ const login = localStorage.getItem("token")
   };
 
   const handleVisualizarLista = () => {
-    navigation("/lista_espera");
+    navigation("/principal");
     handleClose();
   };
   const handleContatarSuporte = () =>{

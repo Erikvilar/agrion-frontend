@@ -1,6 +1,8 @@
-import React from 'react';
+
 
 import styles from "./container.module.css"
+// @ts-ignore
+import React from "react";
 
 interface ContainerProps {
   isElement:boolean;
@@ -9,7 +11,7 @@ interface ContainerProps {
 }
 
 
-const Container: React.FC<ContainerProps> = ({children, isElement}) => {
+const Container =  ({children, isElement}:ContainerProps) => {
   return (
     <div className={isElement ? styles.container : styles.containerElement}>
      {children}

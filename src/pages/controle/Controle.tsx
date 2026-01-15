@@ -1,0 +1,340 @@
+import { useEffect, useState } from "react";
+import {
+    Box,
+    Card,
+    CardContent,
+    Grid,
+    IconButton,
+    Typography,
+    Stack,
+    Chip,
+    Avatar,
+    Collapse,
+    CircularProgress,
+    Button,
+    Skeleton,
+    TextField,
+    InputAdornment
+} from "@mui/material";
+import { APP_THEME, type ThemeMode } from "@/styles/themeConstants"
+
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ScaleIcon from '@mui/icons-material/Scale';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import ApiServices from "@/services/api-service";
+
+interface PreCadastroItem {
+    identificador: number;
+    nomeMotorista: string;
+    placa: string;
+    telefone: string;
+    modelo: string;
+    marca: string;
+    produto: string;
+    status: string;
+    previsaoChegada?: string;
+    pesoVazio?: number;
+    confirmado?: boolean;
+    prioridade?: boolean;
+}
+
+export interface ConfirmarEntradaDTO {
+    identificador: number;
+    confirmar: boolean;
+    pesoVazio?: number;
+}
+
+export default function Controle() {
+    const [mode, setMode] = useState<ThemeMode>('dark');
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [rows, setRows] = useState<PreCadastroItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [confirmingId, setConfirmingId] = useState<number | null>(null);
+
+    const [pesoInput, setPesoInput] = useState<string>("");
+
+    const theme = APP_THEME[mode];
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const { data, success } = await ApiServices.buscarTodosPreCadastro();
+            if (success && data) {
+                const dadosFormatados: PreCadastroItem[] = data.map((item: any) => ({
+                    identificador: item.identificador,
+                    nomeMotorista: item.nomeMotorista,
+                    placa: item.placa,
+                    telefone: item.contato || item.telefone,
+                    modelo: item.modelo,
+                    marca: item.marca,
+                    produto: item.produto || 'Granel',
+                    status: !item.confirmado ? 'AGUARDANDO' : 'NO PÁTIO',
+                    previsaoChegada: item.previsaoChegada,
+                    pesoVazio: item.peso ?? 0,
+                    confirmado: item.confirmado,
+                    prioridade: item.prioridade
+                }));
+
+
+                const sorted = dadosFormatados.sort((a, b) => {
+
+                    if (a.prioridade && !b.prioridade) return -1;
+                    if (!a.prioridade && b.prioridade) return 1;
+
+                    // Segundo critério: Tempo (Mais antigo primeiro)
+                    const dateA = a.previsaoChegada ? new Date(a.previsaoChegada).getTime() : Infinity;
+                    const dateB = b.previsaoChegada ? new Date(b.previsaoChegada).getTime() : Infinity;
+                    return dateA - dateB;
+                });
+
+                setRows(sorted);
+
+            } else {
+
+            }
+        } catch (err) {
+            console.error("Erro ao buscar pré-cadastros:", err);
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const toggleTheme = () => setMode((prev) => prev === 'dark' ? 'light' : 'dark');
+
+    const handleCardClick = (id: number) => {
+        if (expandedId !== id) setPesoInput("");
+        setExpandedId(prev => prev === id ? null : id);
+    };
+
+    const handleConfirmarEntrada = async (preCadastroItem: PreCadastroItem) => {
+        const pesoNumerico = parseFloat(pesoInput);
+        if (isNaN(pesoNumerico) || pesoNumerico <= 0) return;
+
+        setConfirmingId(preCadastroItem.identificador);
+        try {
+            const responseDTO: ConfirmarEntradaDTO = {
+                identificador: preCadastroItem.identificador,
+                confirmar: true,
+                pesoVazio: pesoNumerico
+            };
+
+            const { success } = await ApiServices.confirmarEntrada(responseDTO);
+
+            if (success) {
+                setRows(prevRows => prevRows.map(row => {
+                    if (row.identificador === preCadastroItem.identificador) {
+                        return { ...row, confirmado: true, status: 'NO PÁTIO', pesoVazio: pesoNumerico };
+                    }
+                    return row;
+                }));
+                setPesoInput("");
+                setExpandedId(null);
+            }
+        } catch (error) {
+            console.error("Erro ao confirmar entrada:", error);
+        } finally {
+            setConfirmingId(null);
+        }
+    };
+
+    const calcularTempo = (dataString?: string) => {
+        if (!dataString) return "Sem previsão";
+        const agora = new Date().getTime();
+        const alvo = new Date(dataString).getTime();
+        const diffMinutos = Math.floor((alvo - agora) / 60000);
+        if (diffMinutos < 0) {
+            const atraso = Math.abs(diffMinutos);
+            return atraso > 60 ? `Há ${Math.floor(atraso / 60)}h` : `Há ${atraso} min`;
+        }
+        return diffMinutos > 60 ? `Em ${Math.floor(diffMinutos / 60)}h` : `Em ${diffMinutos} min`;
+    };
+
+    const getStatusColor = (status: string) => {
+        if (status === 'AGUARDANDO') return '#ca8a04';
+        if (status === 'NO PÁTIO') return '#16a34a';
+        return theme.text.disabled;
+    };
+
+    // @ts-ignore
+    return (
+        <Box sx={{
+            width: "100%",
+            height: "100vh",
+            backgroundColor: theme.background.main,
+            color: theme.text.primary,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: "hidden"
+        }}>
+            {/* SEÇÃO ESTÁTICA */}
+            <Box sx={{ flexShrink: 0 }}>
+                <Box sx={{ p: 2, pt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.background.paper, borderBottom: `1px solid ${theme.border.divider}` }}>
+                    <Box>
+                        <Typography variant="caption" sx={{ color: theme.text.secondary, fontWeight: 600 }}>BEM-VINDO</Typography>
+                        <Typography variant="h5" sx={{ fontWeight: 800, color: theme.text.primary }}>Controle Pátio</Typography>
+                    </Box>
+                    <Box>
+                        <IconButton onClick={fetchData} disabled={loading} sx={{ color: theme.text.primary }}><RefreshIcon /></IconButton>
+                        <IconButton onClick={toggleTheme} sx={{ color: theme.text.primary }}>{mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}</IconButton>
+                    </Box>
+                </Box>
+
+                <Box sx={{ p: 2 }}>
+                    <Grid container spacing={2}>
+
+                            <Card sx={{ backgroundColor: theme.background.paper, border: `1px solid ${theme.border.main}`, boxShadow: 'none' }}>
+                                <CardContent sx={{ p: '12px !important' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="h5" fontWeight={800} color={theme.text.primary}>{rows.filter(p => p?.confirmado).length}</Typography>
+                                        <LocalShippingIcon sx={{ color: theme.border.focus, opacity: 0.8, fontSize: 20 }} />
+                                    </Box>
+                                    <Typography variant="caption" color={theme.text.secondary} sx={{fontSize: '0.65rem'}}>Pátio Total</Typography>
+                                </CardContent>
+                            </Card>
+
+                            <Card sx={{ backgroundColor: theme.background.paper, border: `1px solid ${theme.border.main}`, boxShadow: 'none' }}>
+                                <CardContent sx={{ p: '12px !important' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="h5" fontWeight={800} sx={{ color: '#ca8a04' }}>{rows.filter(p => !p?.confirmado).length}</Typography>
+                                        <AccessTimeIcon sx={{ color: '#ca8a04', opacity: 0.8, fontSize: 20 }} />
+                                    </Box>
+                                    <Typography variant="caption" color={theme.text.secondary} sx={{fontSize: '0.65rem'}}>Agendados</Typography>
+                                </CardContent>
+                            </Card>
+
+
+                            <Card sx={{ backgroundColor: theme.background.paper, border: `1px solid ${theme.border.main}`, boxShadow: 'none' }}>
+                                <CardContent sx={{ p: '12px !important' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="h5" fontWeight={800} sx={{ color: '#ca8a04' }}>{rows.filter(p => p?.prioridade).length}</Typography>
+                                        <LocalShippingIcon sx={{ color: '#ca8a04', opacity: 0.8, fontSize: 20 }} />
+                                    </Box>
+                                    <Typography variant="caption" color={theme.text.secondary} sx={{fontSize: '0.65rem'}}>Prioritários</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                </Box>
+            </Box>
+
+
+            <Box sx={{
+                flex: 1,
+                px: 2,
+                pb: 4,
+                overflowY: "auto",
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': { display: 'none' }
+            }}>
+                <Stack spacing={2}>
+                    {loading ? (
+                        Array.from(new Array(4)).map((_, i) => <Skeleton key={i} variant="rectangular" height={90} sx={{ borderRadius: 3, bgcolor: theme.border.divider }} />)
+                    ) : (
+                        rows.map((item) => {
+                            const isExpanded = expandedId === item.identificador;
+                            const isPesoValido = parseFloat(pesoInput) > 0;
+
+                            const cardBg = item.prioridade ? (mode === 'dark' ? '#2c2615' : '#fffbeb') : theme.background.paper;
+                            const cardBorder = item.prioridade ? '#ca8a04' : (isExpanded ? theme.border.focus : theme.border.main);
+
+                            return (
+                                <Card
+                                    key={item.identificador}
+                                    onClick={() => handleCardClick(item.identificador)}
+                                    sx={{
+                                        backgroundColor: cardBg,
+                                        border: `1px solid ${cardBorder}`,
+                                        borderRadius: '12px',
+                                        transition: 'all 0.3s ease',
+                                        cursor: 'pointer',
+                                        position: 'relative',
+                                        '&::before': item.prioridade ? {
+                                            content: '""', position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', backgroundColor: '#ca8a04'
+                                        } : {}
+                                    }}
+                                >
+                                    <CardContent sx={{ p: 2, '&:last-child': { pb: isExpanded ? 0 : 2 } }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                                            <Box display="flex" gap={1.5}>
+                                                <Avatar sx={{ bgcolor: item.prioridade ? '#ca8a04' : theme.border.divider, color: item.prioridade ? '#fff' : theme.text.primary, width: 40, height: 40, fontWeight: 700 }}>
+                                                    {item.nomeMotorista?.substring(0, 2).toUpperCase()}
+                                                </Avatar>
+                                                <Box>
+                                                    <Typography variant="subtitle1" fontWeight={700} color={theme.text.primary} lineHeight={1.2}>{item.nomeMotorista}</Typography>
+                                                    <Typography variant="body2" color={theme.text.secondary} fontSize="0.8rem">{item.placa} • {item.produto}</Typography>
+                                                </Box>
+                                            </Box>
+
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                                                <Chip label={item.status} size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800, backgroundColor: `${getStatusColor(item.status)}20`, color: getStatusColor(item.status), border: `1px solid ${getStatusColor(item.status)}40` }} />
+                                                {item.prioridade && <Chip label="PRIORIDADE" size="small" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900, bgcolor: '#ca8a04', color: '#fff' }} />}
+                                            </Box>
+                                        </Box>
+
+                                        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+                                            <Box display="flex" alignItems="center" gap={0.5}>
+                                                <AccessTimeIcon sx={{ fontSize: 16, color: item.prioridade ? '#ca8a04' : theme.text.secondary }} />
+                                                <Typography variant="caption" color={item.prioridade ? '#ca8a04' : theme.text.secondary} fontWeight={item.prioridade ? 700 : 400}>
+                                                    {calcularTempo(item.previsaoChegada)}
+                                                </Typography>
+                                            </Box>
+                                            <Box display="flex" alignItems="center" gap={0.5}>
+                                                <ScaleIcon sx={{ fontSize: 16, color: theme.text.secondary }} />
+                                                <Typography variant="caption" color={theme.text.secondary}>{item.pesoVazio ? `${item.pesoVazio} kg` : 'N/A'}</Typography>
+                                            </Box>
+                                        </Box>
+                                    </CardContent>
+
+                                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                                        <Box sx={{ p: 2, pt: 0, mt: 1, backgroundColor: item.prioridade ? 'transparent' : theme.action.activeFilterBg, borderTop: `1px solid ${theme.border.divider}` }}>
+                                            {!item.confirmado && (
+                                                <Box sx={{ mt: 2, mb: 2 }}>
+                                                    <Typography variant="caption" sx={{ color: theme.text.secondary, mb: 1, display: 'block' }}>INFORME O PESO DE ENTRADA (KG):</Typography>
+                                                    <TextField
+                                                        fullWidth size="small" type="number" value={pesoInput}
+                                                        onChange={(e) => setPesoInput(e.target.value)}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        placeholder="0.00"
+                                                        InputProps={{
+                                                            startAdornment: <InputAdornment position="start"><ScaleIcon fontSize="small" sx={{ color: theme.text.secondary }} /></InputAdornment>,
+                                                            endAdornment: <InputAdornment position="end" sx={{ color: theme.text.secondary }}>kg</InputAdornment>,
+                                                            sx: { color: theme.text.primary, fontWeight: 600, bgcolor: item.prioridade ? 'rgba(0,0,0,0.05)' : theme.background.main }
+                                                        }}
+                                                    />
+                                                </Box>
+                                            )}
+                                            <Button
+                                                fullWidth variant="contained"
+                                                disabled={confirmingId !== null || item.confirmado || (!item.confirmado && !isPesoValido)}
+                                                onClick={(e) => { e.stopPropagation(); handleConfirmarEntrada(item); }}
+                                                startIcon={confirmingId === item.identificador ? <CircularProgress size={20} color="inherit" /> : <CheckCircleIcon />}
+                                                sx={{
+                                                    backgroundColor: item.confirmado ? "#16a34a" : (item.prioridade ? "#ca8a04" : theme.border.focus),
+                                                    fontWeight: 700, py: 1.2, borderRadius: '8px', textTransform: 'none', boxShadow: 'none',
+                                                    "&:disabled": { backgroundColor: item.confirmado ? "#16a34a" : theme.border.divider, color: "white", opacity: 0.6 }
+                                                }}
+                                            >
+                                                {confirmingId === item.identificador ? "Processando..." : item.confirmado ? "Entrada confirmada" : "Confirmar entrada"}
+                                            </Button>
+                                        </Box>
+                                    </Collapse>
+                                </Card>
+                            );
+                        })
+                    )}
+                </Stack>
+            </Box>
+        </Box>
+    );
+}

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
-import styles from "./suportePage.module.css"
-import Adaptive from "../../components/adaptive-component/Component";
+import styles from "./suporte.module.css"
+
+import {Box} from "@mui/material";
 
 type StatusEnum = "critico" | "normal" | "outro";
 
@@ -11,7 +12,7 @@ interface SACDto {
   status: StatusEnum;
 }
 
-const SuportePage = () => {
+const Suporte = () => {
   const [form, setForm] = useState<SACDto>({
     title: "",
     msg: "",
@@ -33,7 +34,7 @@ const SuportePage = () => {
   };
 
   return (
-    <Adaptive>
+ <Box>
       <div className={styles.container}>
         <h2 className={styles.title}>Contato com Suporte</h2>
 
@@ -41,7 +42,7 @@ const SuportePage = () => {
           Você pode abrir um chamado ou entrar em contato pelos meios abaixo:
         </p>
 
-        {/* Opções alternativas */}
+
         <div className={styles.contactOptions}>
           <a
             className={styles.contactButton}
@@ -97,8 +98,8 @@ const SuportePage = () => {
           </button>
         </form>
       </div>
-    </Adaptive>
+ </Box>
   );
 };
 
-export default SuportePage;
+export default Suporte;

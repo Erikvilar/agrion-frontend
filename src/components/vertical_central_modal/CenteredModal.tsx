@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -44,11 +44,11 @@ export const CenteredModal = forwardRef<ModalRef, ModalProps>((props, ref) => {
   return (
     <Dialog
       open={isOpen}
-      onClose={handleClose} // Fecha ao clicar fora ou ESC
+      onClose={handleClose}
       fullWidth
       maxWidth={maxWidth}
     >
-      {/* Cabeçalho com Título e X */}
+
       <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h6" fontWeight="bold">
           {title}

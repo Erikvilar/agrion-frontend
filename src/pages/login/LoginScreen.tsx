@@ -14,16 +14,16 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import React, { useRef, useState } from "react";
+import  { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import LoadingIndicator, { type LoadingIndicatorRef } from "../../components/loading-indicator/Component";
-import { ActionType } from "../../components/modal-informativo/Component";
-import { useIsMobile } from "../../hooks/useIsMobile";
-import { useNotification } from "../../hooks/useNotification";
-import type UserDTO from "../../model/UserDTO";
+import { ActionType } from "@/components/modal-informativo/Component";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useNotification } from "@/hooks/useNotification";
+import type UserDTO from "../../model/dto/UserDTO.ts";
 import ApiServices from "../../services/api-service";
-import { APP_THEME } from "../../styles/themeConstans";
+import { APP_THEME } from "@/styles/themeConstants";
 
 const BG_IMAGE_URL = "https://rehagro.com.br/blog/wp-content/uploads/2025/04/capa-agricultura-sustentavel.jpeg";
 
@@ -78,7 +78,7 @@ export const LoginScreen = () => {
                 localStorage.setItem("user", data.fullName || "");
                 localStorage.setItem("login", data.login);
                 localStorage.setItem("avatar", data.avatar || "");
-                navigate("/lista_espera");
+                navigate(isMobile ? "/controle":"/principal");
             } else {
                 showNotification(ActionType.Warning, "Falha no Login", message || "Credenciais inválidas", () => {});
             }
@@ -96,50 +96,69 @@ export const LoginScreen = () => {
 
     return (
         <Box sx={{
-            minHeight: '100vh',
-            width: '100%',
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            position: "relative",
-
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100%",
+            overflow: "hidden",
             backgroundImage: `url(${BG_IMAGE_URL})`,
             backgroundRepeat: 'no-repeat',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-
+            zIndex: 0,
             "&::before": {
                 content: '""',
                 position: "absolute",
+                height: "100%",
                 top: 0, left: 0, right: 0, bottom: 0,
                 backgroundColor: "rgba(0,0,0,0.7)",
                 backdropFilter: "blur(2px)",
-                zIndex: 0
+                zIndex: -1
             }
         }}>
             <LoadingIndicator ref={loaderRef} />
             {NotificationModal}
 
-            <MuiContainer maxWidth="sm" disableGutters={isMobile} sx={{ position: "relative", zIndex: 1 }}>
+            <MuiContainer
+                maxWidth="sm"
+                disableGutters={isMobile}
+                sx={{
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    pb: 0,
+                    zIndex: 1,
+                }}
+            >
                 <Paper
                     elevation={isMobile ? 0 : 8}
                     sx={{
+                        position: "relative",
+
                         padding: isMobile ? 3 : 6,
                         borderRadius: isMobile ? 0 : 4,
+
                         backgroundColor: "rgba(255,255,255, 0.1)",
                         backdropFilter: "blur(16px)",
                         border: "none",
 
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
+                        width: '100%',
 
-                        minHeight: isMobile ? '100vh' : 'auto',
-                        justifyContent: isMobile ? 'center' : 'flex-start',
+                        height: 'auto',
+
+
+                        maxHeight: '100%',
+
                         transition: "all 0.3s ease"
                     }}
                 >
 
+                    {/* LOGO */}
                     <Box sx={{ mb: 5, textAlign: 'center', width: '100%' }}>
                         <img
                             src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logoAgrion.jpg?raw=true"
@@ -159,9 +178,8 @@ export const LoginScreen = () => {
                         </Typography>
                     </Box>
 
-
+                    {/* INPUTS E BOTÃO */}
                     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}>
-
                         <TextField
                             fullWidth
                             placeholder="Usuário"
@@ -175,7 +193,7 @@ export const LoginScreen = () => {
                                 "& .MuiOutlinedInput-root": {
                                     borderRadius: 3,
                                     height: 56,
-                                    backgroundColor: "rgb(255,255,255,0.1)",
+                                    backgroundColor: "rgba(255,255,255,0.1)",
                                     color: "white",
                                     transition: "all 0.2s",
                                     "& fieldset": { borderColor: "white" },
@@ -183,7 +201,8 @@ export const LoginScreen = () => {
                                     "&.Mui-focused fieldset": {
                                         borderColor: theme.border.focus,
                                         borderWidth: 2,
-                                        backgroundColor:"transparent"},
+                                        backgroundColor:"transparent"
+                                    },
                                 },
                                 "& input::placeholder": {
                                     color: "white",
@@ -193,7 +212,6 @@ export const LoginScreen = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-
                                         <PersonIcon sx={{ color: theme.text.secondary }} />
                                     </InputAdornment>
                                 ),
@@ -214,7 +232,7 @@ export const LoginScreen = () => {
                                 "& .MuiOutlinedInput-root": {
                                     borderRadius: 3,
                                     height: 56,
-                                    backgroundColor: "rgb(255,255,255,0.1)",
+                                    backgroundColor: "rgba(255,255,255,0.1)",
                                     color: "white",
                                     transition: "all 0.2s",
                                     "& fieldset": { borderColor: "white" },
@@ -280,7 +298,7 @@ export const LoginScreen = () => {
                         </Button>
                     </Box>
 
-
+                    {/* FOOTER */}
                     <Box sx={{ mt: 6 }}>
                         <Typography variant="caption" sx={{ color: "white", fontWeight: 500 }} align="center" display="block">
                             © {new Date().getFullYear()} Agrion. Sistema de Controle.
