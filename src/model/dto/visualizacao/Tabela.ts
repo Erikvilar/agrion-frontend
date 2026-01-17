@@ -30,6 +30,6 @@ export interface ViewTabelaDTO {
     pesoInicial: number;
     pesoFinal: number;
     operacao: string;
-    status: string;
     dataCriacao:Date;
+    status: string;
 }

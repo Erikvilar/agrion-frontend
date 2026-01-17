@@ -29,7 +29,6 @@ import {useIsMobile} from "@/hooks/useIsMobile";
 import CadastroDTO from "../../model/dto/registro/RegistroCadastroDTO";
 import type StatusDTO from "../../model/dto/StatusDTO.ts";
 import ApiServices from "../../services/api-service";
-
 import {APP_THEME, type ThemeMode} from "@/styles/themeConstants";
 import Listagem from "@/pages/principal/listagem/Listagem";
 import RegistroCadastroDTO from "../../model/dto/registro/RegistroCadastroDTO";
@@ -38,25 +37,11 @@ import {ViewTabelaDTO, ViewTabelaPreCadastroDTO} from "@/model/dto/visualizacao/
 
 export type CadastroRow = ViewTabelaPreCadastroDTO | ViewTabelaDTO;
 
+interface ListaEsperaProps {isModalOpen: boolean; setIsModalOpen: (open: boolean) => void;}
 
-interface ListaEsperaProps {
-    isModalOpen: boolean;
-    setIsModalOpen: (open: boolean) => void;
-}
+export const colunaPreCadastro = ["Motorista", "Contato", "Placa", "CPF", "Tipo", "Produto", "Nº Ordem", "Peso (Kg)", "Prev. Chegada", "Operação", "Status"]
 
-export const colunaPreCadastro = ["Motorista",
-    "Contato",
-    "Placa",
-    "CPF",
-    "Tipo",
-    "Produto",
-    "Nº Ordem",
-    "Peso (Kg)",
-    "Prev. Chegada",
-    "Operação",
-    "Status"
-]
-export const colunaCadastro = ["Motorista", "Telefone", "Placa", "CPF", "Produto", "Peso inicial", "Peso final", "Operação", "status"]
+export const colunaCadastro = ["Motorista", "Telefone", "Placa", "CPF","Tipo produto","Produto", "Peso inicial", "Peso final", "Data chegada","Operação", "status"]
 
 const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
 
@@ -73,8 +58,9 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
     const loaderRef = useRef<LoadingIndicatorRef>(null);
 
     const [busca, setBusca] = useState("");
-    //uso o duplo tipo vindo das interfaces
+
     const [rows, setRows] = useState<CadastroRow[]>([])
+
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const newRowRef = useRef<HTMLTableRowElement | null>(null);
@@ -216,14 +202,14 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
         }
     }
 
-
     const buscarPorStatus = useCallback(async (codigo: number, indexStatus: number, isBackgroundFetch = false) => {
         try {
             loaderRef.current?.start();
             if (isBackgroundFetch) setIsRefreshing(true);
             setFiltroAtivo(indexStatus);
-
+            console.log(indexStatus)
             if (codigo === 1) {
+                setRows([])
                 setColuna(colunaPreCadastro)
                 await buscarTodosPreCadastro();
             } else {
@@ -240,14 +226,16 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
             loaderRef.current?.done();
         }
     }, []);
+
     const fetchTodos = async () => {
     }
+
     useEffect(() => {
+
         try {
 
-            fetchTodos();
-            buscarTodosPreCadastro()
             buscarTodosStatus()
+            buscarPorStatus(3,2);
 
         } catch (e) {
             console.log(e)
@@ -311,7 +299,7 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
             height: "100vh",
             display: "flex",
             flexDirection: "column",
-            backgroundColor: theme.background.main, // TEMA APLICADO
+            backgroundColor: theme.background.main,
             width: "100%",
             overflow: "hidden",
             transition: "background-color 0.3s ease"
@@ -363,7 +351,7 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
                             fontSize: isMobile ? '1.5rem' : '2rem',
                             letterSpacing: '-0.5px'
                         }}>
-                            Painel Principal
+                           AGRION - Gestão de cargas
                         </Typography>
                         <Typography variant="body1" sx={{color: theme.text.secondary, mt: 0.5}}>
                             Gerenciador de cargas e operações.
@@ -373,7 +361,6 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
                     <Stack direction={isMobile ? "column" : "row"} spacing={1.5} alignItems="center"
                            sx={{mt: isMobile ? 2 : 0}}>
 
-                        {/* SWITCH DE TEMA */}
                         <Tooltip title={mode === 'dark' ? "Modo Claro" : "Modo Escuro"}>
                             <IconButton onClick={toggleTheme}
                                         sx={{color: theme.text.primary, border: `1px solid ${theme.border.main}`}}>

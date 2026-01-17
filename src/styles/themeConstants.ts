@@ -73,37 +73,37 @@ export const APP_THEME: Record<ThemeMode, ColorPalette> = {
 
     light: {
         background: {
-            main: "#dddddd",    // Zinc 100 (Cinza sutil, evita o branco ofuscante)
-            paper: "#ffffff",   // Branco puro para os cards saltarem do fundo
-            hover: "#f1f5f9",
+            main: "#f1f5f9",    // Slate 100 (Fundo claro, limpo e profissional)
+            paper: "#ffffff",   // Branco puro (Cards saltam aos olhos sobre o fundo Slate 100)
+            hover: "#e2e8f0",   // Slate 200 (Hover sutil)
         },
         // MANTENDO A TABELA ESCURA NO MODO LIGHT (Padrão Dashboard Industrial)
         table: {
-            primary: "#f8fafc",   // Slate 50
-            secondary: "#94a3b8", // Slate 400
-            main: "#0f172a",      // Slate 900 (Profissionalismo e profundidade)
-            paper: "#1e293b",     // Slate 800
-            hover: "#334155",     // Slate 700
+            primary: "#f8fafc",   // Slate 50 (Texto claro na tabela escura)
+            secondary: "#94a3b8", // Slate 400 (Texto secundário)
+            main: "#1e2933",      // Slate 900 (Fundo da tabela - Contraste forte com o bg #f1f5f9)
+            paper: "#1e293b",     // Slate 800 (Cabeçalhos/Linhas alternadas)
+            hover: "#334155",     // Slate 700 (Hover nas linhas da tabela)
         },
         text: {
-            primary: "#0f172a",   // Slate 900
+            primary: "#0f172a",   // Slate 900 (Texto escuro para o resto da tela)
             secondary: "#475569", // Slate 600
             disabled: "#94a3b8",
             inverse: "#ffffff",
             highlight: "#2563eb",
         },
         border: {
-            main: "#e2e8f0",    // Slate 200
+            main: "#e2e8f0",    // Slate 200 (Bordas sutis)
             focus: "#3b82f6",
-            divider: "#334155", // Divisor para a tabela escura
+            divider: "#334155", // Divisor escuro para combinar com a tabela
         },
         action: {
-            activeFilterBg: "#e2e8f0",
+            activeFilterBg: "#cbd5e1", // Slate 300 (Um pouco mais visível no fundo claro)
             inactiveFilterBg: "transparent",
         },
         scroll: {
-            track: "#0f172a",
-            thumb: "#475569",
+            track: "#f1f5f9",   // Combina com o fundo da página
+            thumb: "#94a3b8",   // Slate 400 (Discreto)
         }
     },
 

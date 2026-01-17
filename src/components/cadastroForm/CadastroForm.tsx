@@ -63,7 +63,7 @@ export const CadastroForm = ({
     return (
         <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%"}}>
 
-            {/* --- CABEÇALHO --- */}
+
             <Box >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" fontWeight={700} color={grey[800]} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

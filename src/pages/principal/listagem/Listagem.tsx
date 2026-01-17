@@ -34,10 +34,10 @@ interface TabelaProps {
 interface TableRowItemProps {
     row: CadastroRow;
     index: number;
-    status: StatusDTO[];
     handleMudarStatus: (row: CadastroRow) => void;
     handleRowClick: (row: RegistroCadastroDTO) => void;
     theme: ColorPalette;
+    statusList: StatusDTO[];
 }
 
 
@@ -47,27 +47,43 @@ const formatarDataHora = (data: Date | string) => {
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 };
 
-const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, theme }: TableRowItemProps) => {
-    const estaConfirmado = 'confirmado' in row ? row.confirmado : (row as any).confirmacao;
 
-    const statusColor = estaConfirmado ? "#2ecc71" : "#f1c40f";
+//REGRA NEGÓCIO - VISUAL
+const decidirStatusBotao = (row:CadastroRow, statusList:StatusDTO[]) =>{
 
-    const statusLabel = estaConfirmado ? "NO PÁTIO" : "NÃO CONFIRMADO";
+    const estaConfirmado = !!(
+        ('confirmado' in row ? row.confirmado : false) ||
+        ('confirmacao' in row ? (row as any).confirmacao : false)
+    );
+    const valorStatusRow = 'status' in row ? row.status : (row as any).status;
 
-    // const idUnico = 'identificador' in row ? row.identificador : (row as any).codigoCadastro;
-    //
-    // const numeroOrdem = 'ordem' in row ? row.ordem : (row as any).numeroOrdem;
+    const statusEncontrado = statusList?.find(
+        (s: StatusDTO) => s.descricao === valorStatusRow || s.id === valorStatusRow
+    )
 
+    const statusColor = estaConfirmado
+        ? "#2ecc71"
+        : (statusEncontrado?.corHexadecimal ?? "#f1c40f");
+
+    const statusLabel = estaConfirmado
+        ? "NO PÁTIO"
+        : (statusEncontrado?.descricao ?? valorStatusRow ?? "NÃO CONFIRMADO");
+
+    return {statusColor, statusLabel};
+
+
+}
+
+const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,theme }: TableRowItemProps) => {
+
+
+    const {statusColor, statusLabel} = decidirStatusBotao(row, statusList);
 
     const pesoExibicao = 'peso' in row ? row.peso : (row as any).peso;
 
-
-    // const dataReferencia = 'previsaoChegada' in row ? row.previsaoChegada : (row as any).dataCriacao;
-    //
-    // const tipoCarga = 'tipo' in row ? row.tipo : (row as any).tipoProduto;
-
     const origemCarga = 'origem' in row ? row.origem : "Interna/Própria";
 
+    const podeMudarStatus = 'status' in row;
 
     const cellStyle = {
         fontSize: "0.875rem",
@@ -79,7 +95,14 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, theme }: Ta
 
     const ActionButton = () => (
         <Button
-            onClick={(e) => { e.stopPropagation(); handleMudarStatus(row); }}
+            onClick={(e) => {
+                e.stopPropagation();
+                if(podeMudarStatus) {
+                    handleMudarStatus(row);
+                }
+
+
+            }}
             variant="contained" size="small"
             sx={{
                 minWidth: 90,
@@ -128,15 +151,11 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, theme }: Ta
             <TableCell sx={cellStyle}>{row.produto || "-"}</TableCell>
             <TableCell sx={cellStyle}>{row.ordem ? row.ordem : "0"}</TableCell>
 
-            {/* Peso Formatado */}
-            <TableCell sx={cellStyle}>
-                {pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : "0"} Kg
-            </TableCell>
 
-            {/* Previsão de Chegada Formatada */}
-            <TableCell sx={cellStyle}>
-                {formatarDataHora("previsaoChegada" in row ? row.previsaoChegada : "")}
-            </TableCell>
+            <TableCell sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : "0"} Kg</TableCell>
+
+
+            <TableCell sx={cellStyle}>{formatarDataHora("previsaoChegada" in row ? row.previsaoChegada : "")}</TableCell>
 
             <TableCell align="center" sx={cellStyle}>{row.operacao || "-"}</TableCell>
             <TableCell align="right" sx={cellStyle}><ActionButton /></TableCell>
@@ -230,7 +249,7 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
                                         row={row}
                                         handleMudarStatus={handleMudarStatus}
                                         handleRowClick={handleRowClick}
-                                        status={status}
+                                        statusList={status}
                                         theme={currentTheme}
                                     />
                                 ))

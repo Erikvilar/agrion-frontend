@@ -69,16 +69,12 @@ const RouterSwitch = () => {
 
       <Box>
             {NotificationModal}
-
             <Routes>
-
                 <Route path="/" element={<LoginScreen />} />
                 <Route path="/historico" element={<Historico />} />
                 <Route path="/suporte" element={< Suporte/>} />
                 <Route path="/principal" element={<Principal setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen} />} />
                 <Route path="/controle" element={<Controle/>}/>
-
-
             </Routes>
 
       </Box>
