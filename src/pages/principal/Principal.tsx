@@ -33,6 +33,7 @@ import {APP_THEME, type ThemeMode} from "@/styles/themeConstants";
 import Listagem from "@/pages/principal/listagem/Listagem";
 import RegistroCadastroDTO from "../../model/dto/registro/RegistroCadastroDTO";
 import {ViewTabelaDTO, ViewTabelaPreCadastroDTO} from "@/model/dto/visualizacao/Tabela";
+import apiService from "../../services/api-service";
 
 
 export type CadastroRow = ViewTabelaPreCadastroDTO | ViewTabelaDTO;
@@ -55,6 +56,7 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
 
 
     const isMobile = useIsMobile();
+
     const loaderRef = useRef<LoadingIndicatorRef>(null);
 
     const [busca, setBusca] = useState("");
@@ -64,8 +66,11 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const newRowRef = useRef<HTMLTableRowElement | null>(null);
+
     const modalRef = useRef<ModalRef>(null);
+
     const offcanvasRef = useRef<OffcanvasRef>(null);
+
     const [coluna, setColuna] = useState(colunaCadastro);
 
     const [status, setStatus] = useState<StatusDTO[]>();
@@ -74,7 +79,12 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
 
     const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
 
-    const getPreCadastroVazio = (): RegistroCadastroDTO => {
+
+
+    const getPreCadastroVazio = (): RegistroCadastroDTO  => {
+
+
+
         return {
             identificador: 0,
             nomeMotorista: "",
@@ -98,7 +108,8 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
 
     const [preCadastro, setPreCadastro] = useState<RegistroCadastroDTO>(getPreCadastroVazio);
 
-    const errors = {};
+    const [modoOperacao, setModoOperacao] = useState<boolean>(false);
+
 
 
     const handlePreCadastro = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
@@ -139,7 +150,9 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
     };
 
     const handleRowClick = (row: RegistroCadastroDTO) => {
+        const modo = 'confirmado' in row
         setPreCadastro(row);
+        setModoOperacao(modo)
         offcanvasRef.current?.open();
     };
 
@@ -177,7 +190,14 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
 
     const buscarTodosPreCadastro = async () => {
         try {
-            loaderRef.current?.start();
+            const {isSuccess }= await apiService.notifyUser("adminagrion", "Cade o carregamento seu maldito");
+
+            if(isSuccess){
+                console.log("MESSAGEM ENVIADA COM SUCESSO")
+            }else{
+                console.log("falha na comunicação")
+            }
+
             const {data, success} = await ApiServices.buscarTodosPreCadastro();
 
             if (success && data) {
@@ -198,7 +218,7 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
         } catch (error) {
             console.error("Erro ao buscar dados:", error);
         } finally {
-            loaderRef.current?.done();
+
         }
     }
 
@@ -233,6 +253,7 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
     useEffect(() => {
 
         try {
+
 
             buscarTodosStatus()
             buscarPorStatus(3,2);
@@ -318,7 +339,7 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
                 <CadastroForm
                     cadastro={preCadastro}
                     handleCadastro={handlePreCadastro}
-                    errors={errors}
+                    modoOperacao={modoOperacao}
                     status={status!}
                     submitCadastro={submitPreCadastro}
                     clearForm={handleClearForm}

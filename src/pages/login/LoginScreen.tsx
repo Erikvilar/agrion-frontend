@@ -24,6 +24,7 @@ import { useNotification } from "@/hooks/useNotification";
 import type UserDTO from "../../model/dto/UserDTO.ts";
 import ApiServices from "../../services/api-service";
 import { APP_THEME } from "@/styles/themeConstants";
+import {initializeWebSocket} from "@/services/websocket/InitializeWebSocket";
 
 const BG_IMAGE_URL = "https://rehagro.com.br/blog/wp-content/uploads/2025/04/capa-agricultura-sustentavel.jpeg";
 
@@ -71,13 +72,20 @@ export const LoginScreen = () => {
         loaderRef.current?.start();
 
         try {
-            const { success, data, message } = await ApiServices.login(user);
+            const { success, data, message,} = await ApiServices.login(user);
 
             if (success && data) {
-                localStorage.setItem("token", data.token);
-                localStorage.setItem("user", data.fullName || "");
-                localStorage.setItem("login", data.login);
-                localStorage.setItem("avatar", data.avatar || "");
+
+                const {token, fullName, login, avatar,roles} = data;
+
+                localStorage.setItem("token", token);
+                localStorage.setItem("user", fullName || "");
+                localStorage.setItem("login", login);
+                localStorage.setItem("avatar", avatar || "");
+                localStorage.setItem("roles", JSON.stringify(roles));
+
+                initializeWebSocket(roles,token);
+
                 navigate(isMobile ? "/controle":"/principal");
             } else {
                 showNotification(ActionType.Warning, "Falha no Login", message || "Credenciais inválidas", () => {});

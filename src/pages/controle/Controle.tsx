@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react"; // Adicionado useRef e useCallback
 import {
     Box,
     Card,
@@ -14,19 +14,29 @@ import {
     Button,
     Skeleton,
     TextField,
-    InputAdornment
+    InputAdornment,
+    Drawer,
+    List,
+    ListItem,
+    ListItemText,
+    Badge
 } from "@mui/material";
-import { APP_THEME, type ThemeMode } from "@/styles/themeConstants"
+import { APP_THEME, type ThemeMode } from "@/styles/themeConstants";
 
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ScaleIcon from '@mui/icons-material/Scale';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+
 import ApiServices from "@/services/api-service";
+import { eventEmitter, WSMessage } from "@/services/websocket/InitializeWebSocket";
+import { toast, Toaster } from "react-hot-toast";
 
 interface PreCadastroItem {
     identificador: number;
@@ -55,10 +65,29 @@ export default function Controle() {
     const [rows, setRows] = useState<PreCadastroItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [confirmingId, setConfirmingId] = useState<number | null>(null);
-
     const [pesoInput, setPesoInput] = useState<string>("");
+    const [notifications, setNotifications] = useState<WSMessage[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
 
     const theme = APP_THEME[mode];
+
+
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        audioRef.current = new Audio("https://notificationsounds.com/storage/sounds/file-sounds-1150-pristine.mp3");
+        audioRef.current.volume = 0.5;
+    }, []);
+
+    const playNotificationSound = useCallback(() => {
+        if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => {
+                console.warn("Áudio aguardando interação do usuário.");
+            });
+        }
+    }, []);
+
 
     const fetchData = async () => {
         setLoading(true);
@@ -80,26 +109,17 @@ export default function Controle() {
                     prioridade: item.prioridade
                 }));
 
-
                 const sorted = dadosFormatados.sort((a, b) => {
-
                     if (a.prioridade && !b.prioridade) return -1;
                     if (!a.prioridade && b.prioridade) return 1;
-
-                    // Segundo critério: Tempo (Mais antigo primeiro)
                     const dateA = a.previsaoChegada ? new Date(a.previsaoChegada).getTime() : Infinity;
                     const dateB = b.previsaoChegada ? new Date(b.previsaoChegada).getTime() : Infinity;
                     return dateA - dateB;
                 });
-
                 setRows(sorted);
-
-            } else {
-
             }
         } catch (err) {
             console.error("Erro ao buscar pré-cadastros:", err);
-
         } finally {
             setLoading(false);
         }
@@ -109,6 +129,34 @@ export default function Controle() {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        const handleMessage = (data: WSMessage) => {
+            playNotificationSound();
+
+            setNotifications(prev => {
+                const newList = [data, ...prev];
+                return newList.slice(0, 120);
+            });
+
+            toast.success(data.message || "Nova atualização recebida!", {
+                duration: 5000,
+                icon: '🔔',
+                style: {
+                    borderRadius: '8px',
+                    background: theme.background.paper,
+                    color: theme.text.primary,
+                    border: `1px solid ${theme.border.main}`
+                },
+            });
+        };
+
+        eventEmitter.on("messageReceived", handleMessage);
+        return () => {
+            eventEmitter.off("messageReceived", handleMessage);
+        };
+    }, [theme, playNotificationSound]);
+
+    const clearNotifications = () => setNotifications([]);
     const toggleTheme = () => setMode((prev) => prev === 'dark' ? 'light' : 'dark');
 
     const handleCardClick = (id: number) => {
@@ -127,13 +175,11 @@ export default function Controle() {
                 confirmar: true,
                 pesoVazio: pesoNumerico
             };
-
             const { success } = await ApiServices.confirmarEntrada(responseDTO);
-
             if (success) {
                 setRows(prevRows => prevRows.map(row => {
                     if (row.identificador === preCadastroItem.identificador) {
-                        return { ...row, confirmado: true, status: 'NO PÁTIO', pesoVazio: pesoNumerico };
+                        return { ...row, confirmed: true, status: 'NO PÁTIO', pesoVazio: pesoNumerico };
                     }
                     return row;
                 }));
@@ -165,7 +211,6 @@ export default function Controle() {
         return theme.text.disabled;
     };
 
-    // @ts-ignore
     return (
         <Box sx={{
             width: "100%",
@@ -176,14 +221,20 @@ export default function Controle() {
             flexDirection: 'column',
             overflow: "hidden"
         }}>
-            {/* SEÇÃO ESTÁTICA */}
+            <Toaster position="top-right" reverseOrder={false} />
+
             <Box sx={{ flexShrink: 0 }}>
                 <Box sx={{ p: 2, pt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: theme.background.paper, borderBottom: `1px solid ${theme.border.divider}` }}>
                     <Box>
                         <Typography variant="caption" sx={{ color: theme.text.secondary, fontWeight: 600 }}>BEM-VINDO</Typography>
                         <Typography variant="h5" sx={{ fontWeight: 800, color: theme.text.primary }}>Controle Pátio</Typography>
                     </Box>
-                    <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <IconButton onClick={() => setIsOpen(true)} sx={{ color: theme.text.primary }}>
+                            <Badge badgeContent={notifications.length} color="error">
+                                <NotificationsIcon />
+                            </Badge>
+                        </IconButton>
                         <IconButton onClick={fetchData} disabled={loading} sx={{ color: theme.text.primary }}><RefreshIcon /></IconButton>
                         <IconButton onClick={toggleTheme} sx={{ color: theme.text.primary }}>{mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}</IconButton>
                     </Box>
@@ -191,50 +242,103 @@ export default function Controle() {
 
                 <Box sx={{ p: 2 }}>
                     <Grid container spacing={2}>
-
+                        <Grid item xs={4}>
                             <Card sx={{ backgroundColor: theme.background.paper, border: `1px solid ${theme.border.main}`, boxShadow: 'none' }}>
                                 <CardContent sx={{ p: '12px !important' }}>
                                     <Box display="flex" justifyContent="space-between" alignItems="center">
                                         <Typography variant="h5" fontWeight={800} color={theme.text.primary}>{rows.filter(p => p?.confirmado).length}</Typography>
                                         <LocalShippingIcon sx={{ color: theme.border.focus, opacity: 0.8, fontSize: 20 }} />
                                     </Box>
-                                    <Typography variant="caption" color={theme.text.secondary} sx={{fontSize: '0.65rem'}}>Pátio Total</Typography>
+                                    <Typography variant="caption" color={theme.text.secondary} sx={{ fontSize: '0.65rem' }}>Pátio Total</Typography>
                                 </CardContent>
                             </Card>
-
+                        </Grid>
+                        <Grid item xs={4}>
                             <Card sx={{ backgroundColor: theme.background.paper, border: `1px solid ${theme.border.main}`, boxShadow: 'none' }}>
                                 <CardContent sx={{ p: '12px !important' }}>
                                     <Box display="flex" justifyContent="space-between" alignItems="center">
                                         <Typography variant="h5" fontWeight={800} sx={{ color: '#ca8a04' }}>{rows.filter(p => !p?.confirmado).length}</Typography>
                                         <AccessTimeIcon sx={{ color: '#ca8a04', opacity: 0.8, fontSize: 20 }} />
                                     </Box>
-                                    <Typography variant="caption" color={theme.text.secondary} sx={{fontSize: '0.65rem'}}>Agendados</Typography>
+                                    <Typography variant="caption" color={theme.text.secondary} sx={{ fontSize: '0.65rem' }}>Agendados</Typography>
                                 </CardContent>
                             </Card>
-
-
+                        </Grid>
+                        <Grid item xs={4}>
                             <Card sx={{ backgroundColor: theme.background.paper, border: `1px solid ${theme.border.main}`, boxShadow: 'none' }}>
                                 <CardContent sx={{ p: '12px !important' }}>
                                     <Box display="flex" justifyContent="space-between" alignItems="center">
                                         <Typography variant="h5" fontWeight={800} sx={{ color: '#ca8a04' }}>{rows.filter(p => p?.prioridade).length}</Typography>
                                         <LocalShippingIcon sx={{ color: '#ca8a04', opacity: 0.8, fontSize: 20 }} />
                                     </Box>
-                                    <Typography variant="caption" color={theme.text.secondary} sx={{fontSize: '0.65rem'}}>Prioritários</Typography>
+                                    <Typography variant="caption" color={theme.text.secondary} sx={{ fontSize: '0.65rem' }}>Prioritários</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
-
+                    </Grid>
                 </Box>
             </Box>
 
+            <Drawer
+                anchor="right"
+                open={isOpen}
+                onClose={() => setIsOpen(false)}
+                PaperProps={{
+                    sx: {
+                        width: 320,
+                        backgroundColor: theme.background.paper,
+                        backgroundImage: 'none',
+                        color: theme.text.primary
+                    }
+                }}
+            >
+                <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border.divider}` }}>
+                    <Typography variant="h6" fontWeight={800} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <NotificationsIcon fontSize="small" /> Notificações
+                    </Typography>
+                    <Box>
+                        <IconButton onClick={clearNotifications} size="small" sx={{ color: theme.text.secondary, mr: 1 }}>
+                            <DeleteSweepIcon />
+                        </IconButton>
+                        <IconButton onClick={() => setIsOpen(false)} size="small" sx={{ color: theme.text.secondary }}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+                </Box>
+                <List sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
+                    {notifications.length === 0 ? (
+                        <Box sx={{ p: 4, textAlign: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">Nenhuma notificação por enquanto.</Typography>
+                        </Box>
+                    ) : (
+                        notifications.map((notif, index) => (
+                            <ListItem
+                                key={index}
+                                sx={{
+                                    mb: 1,
+                                    borderRadius: 1,
+                                    bgcolor: mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    borderLeft: `3px solid ${theme.border.focus}`
+                                }}
+                            >
+                                <ListItemText
+                                    primary={notif.message}
+                                    primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                    {new Date().toLocaleTimeString()}
+                                </Typography>
+                            </ListItem>
+                        ))
+                    )}
+                </List>
+            </Drawer>
 
             <Box sx={{
-                flex: 1,
-                px: 2,
-                pb: 4,
-                overflowY: "auto",
-                msOverflowStyle: 'none',
-                scrollbarWidth: 'none',
+                flex: 1, px: 2, pb: 4, overflowY: "auto",
+                msOverflowStyle: 'none', scrollbarWidth: 'none',
                 '&::-webkit-scrollbar': { display: 'none' }
             }}>
                 <Stack spacing={2}>
@@ -244,7 +348,6 @@ export default function Controle() {
                         rows.map((item) => {
                             const isExpanded = expandedId === item.identificador;
                             const isPesoValido = parseFloat(pesoInput) > 0;
-
                             const cardBg = item.prioridade ? (mode === 'dark' ? '#2c2615' : '#fffbeb') : theme.background.paper;
                             const cardBorder = item.prioridade ? '#ca8a04' : (isExpanded ? theme.border.focus : theme.border.main);
 
@@ -253,12 +356,9 @@ export default function Controle() {
                                     key={item.identificador}
                                     onClick={() => handleCardClick(item.identificador)}
                                     sx={{
-                                        backgroundColor: cardBg,
-                                        border: `1px solid ${cardBorder}`,
-                                        borderRadius: '12px',
-                                        transition: 'all 0.3s ease',
-                                        cursor: 'pointer',
-                                        position: 'relative',
+                                        backgroundColor: cardBg, border: `1px solid ${cardBorder}`,
+                                        borderRadius: '12px', transition: 'all 0.3s ease', cursor: 'pointer',
+                                        position: 'relative', overflow: 'hidden',
                                         '&::before': item.prioridade ? {
                                             content: '""', position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', backgroundColor: '#ca8a04'
                                         } : {}
@@ -275,13 +375,11 @@ export default function Controle() {
                                                     <Typography variant="body2" color={theme.text.secondary} fontSize="0.8rem">{item.placa} • {item.produto}</Typography>
                                                 </Box>
                                             </Box>
-
                                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
                                                 <Chip label={item.status} size="small" sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800, backgroundColor: `${getStatusColor(item.status)}20`, color: getStatusColor(item.status), border: `1px solid ${getStatusColor(item.status)}40` }} />
                                                 {item.prioridade && <Chip label="PRIORIDADE" size="small" sx={{ height: 16, fontSize: '0.55rem', fontWeight: 900, bgcolor: '#ca8a04', color: '#fff' }} />}
                                             </Box>
                                         </Box>
-
                                         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
                                             <Box display="flex" alignItems="center" gap={0.5}>
                                                 <AccessTimeIcon sx={{ fontSize: 16, color: item.prioridade ? '#ca8a04' : theme.text.secondary }} />
@@ -295,7 +393,6 @@ export default function Controle() {
                                             </Box>
                                         </Box>
                                     </CardContent>
-
                                     <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                                         <Box sx={{ p: 2, pt: 0, mt: 1, backgroundColor: item.prioridade ? 'transparent' : theme.action.activeFilterBg, borderTop: `1px solid ${theme.border.divider}` }}>
                                             {!item.confirmado && (

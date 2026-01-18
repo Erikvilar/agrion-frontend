@@ -133,7 +133,7 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
                 "&:hover": { backgroundColor: `${theme.table.hover} !important` }
             }}
         >
-            <TableCell sx={cellStyle}>
+            <TableCell sx={cellStyle} align="left">
                 <Box display="flex" flexDirection="column">
                     <Typography variant="body2" fontWeight={700} color={theme.table.primary}>
                         {row.nomeMotorista ? row.nomeMotorista.toUpperCase() : "-"}
@@ -144,18 +144,18 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
                 </Box>
             </TableCell>
 
-            <TableCell sx={cellStyle}>{row.contato || "-"}</TableCell>
-            <TableCell sx={cellStyle}>{row.placa || "-"}</TableCell>
-            <TableCell sx={cellStyle}>{row.cpf || "-"}</TableCell>
-            <TableCell sx={cellStyle}>{row.tipo || "-"}</TableCell>
-            <TableCell sx={cellStyle}>{row.produto || "-"}</TableCell>
-            <TableCell sx={cellStyle}>{row.ordem ? row.ordem : "0"}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{row.contato || "-"}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{row.placa || "-"}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{row.cpf || "-"}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{row.tipo || "-"}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{row.produto || "-"}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{row.ordem ? row.ordem : "0"}</TableCell>
 
 
-            <TableCell sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : "0"} Kg</TableCell>
+            <TableCell align="center" sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : "0"} Kg</TableCell>
 
 
-            <TableCell sx={cellStyle}>{formatarDataHora("previsaoChegada" in row ? row.previsaoChegada : "")}</TableCell>
+            <TableCell align="center"  sx={cellStyle}>{formatarDataHora("previsaoChegada" in row ? row.previsaoChegada : 'dataCriacao' in row ? row.dataCriacao : "")}</TableCell>
 
             <TableCell align="center" sx={cellStyle}>{row.operacao || "-"}</TableCell>
             <TableCell align="right" sx={cellStyle}><ActionButton /></TableCell>
@@ -224,7 +224,7 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
                         <TableHead>
                             <TableRow>
                                 {coluna.map((head:any) => (
-                                    <TableCell key={head} align={head === "Status" ? "right" : "left"} sx={headerStyle}>
+                                    <TableCell key={head} align={head === "Motorista" ? "left":"center"} sx={headerStyle}>
                                         {head}
                                     </TableCell>
                                 ))}
