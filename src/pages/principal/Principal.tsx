@@ -1,4 +1,4 @@
-import {Search} from "@mui/icons-material";
+import { Search } from "@mui/icons-material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -6,6 +6,12 @@ import CachedIcon from "@mui/icons-material/Cached";
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LightModeIcon from '@mui/icons-material/LightMode';
+import {
+    Settings as SettingsIcon,
+    Notifications as NotificationsIcon,
+    Close as CloseIcon,
+    Message as MessageIcon
+} from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -15,155 +21,136 @@ import {
     InputAdornment,
     Stack,
     TextField,
-    Tooltip,
     Typography,
+    Drawer,
+    Badge,
+    Divider,
     type SelectChangeEvent
 } from "@mui/material";
-import {useCallback, useEffect, useRef, useState} from "react";
-import {CadastroForm} from "@/components/cadastroForm/CadastroForm";
-import type {LoadingIndicatorRef} from "@/components/loading-indicator/Component";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CadastroForm } from "@/components/cadastroForm/CadastroForm";
+import type { LoadingIndicatorRef } from "@/components/loading-indicator/Component";
 import LoadingIndicator from "../../components/loading-indicator/Component";
-import {OffCanvasDrawer, type OffcanvasRef} from "@/components/offCanvasDrawer/OffCanvasDrawer";
-import {CenteredModal, type ModalRef} from "@/components/vertical_central_modal/CenteredModal";
-import {useIsMobile} from "@/hooks/useIsMobile";
+import { OffCanvasDrawer, type OffcanvasRef } from "@/components/offCanvasDrawer/OffCanvasDrawer";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import CadastroDTO from "../../model/dto/registro/RegistroCadastroDTO";
 import type StatusDTO from "../../model/dto/StatusDTO.ts";
 import ApiServices from "../../services/api-service";
-import {APP_THEME, type ThemeMode} from "@/styles/themeConstants";
+import { APP_THEME, type ThemeMode } from "@/styles/themeConstants";
 import Listagem from "@/pages/principal/listagem/Listagem";
 import RegistroCadastroDTO from "../../model/dto/registro/RegistroCadastroDTO";
-import {ViewTabelaDTO, ViewTabelaPreCadastroDTO} from "@/model/dto/visualizacao/Tabela";
-import apiService from "../../services/api-service";
+import { ViewTabelaDTO, ViewTabelaPreCadastroDTO } from "@/model/dto/visualizacao/Tabela";
+import eventBus, {WSMessage} from "@/services/websocket/eventBus";
+import {toast} from "react-hot-toast";
 
 
 export type CadastroRow = ViewTabelaPreCadastroDTO | ViewTabelaDTO;
-
-interface ListaEsperaProps {isModalOpen: boolean; setIsModalOpen: (open: boolean) => void;}
+interface ListaEsperaProps { isModalOpen: boolean; setIsModalOpen: (open: boolean) => void; }
 
 export const colunaPreCadastro = ["Motorista", "Contato", "Placa", "CPF", "Tipo", "Produto", "Nº Ordem", "Peso (Kg)", "Prev. Chegada", "Operação", "Status"]
+export const colunaCadastro = ["Motorista", "Telefone", "Placa", "CPF", "Tipo produto", "Produto", "Peso inicial", "Peso final", "Data chegada", "Operação", "status"]
 
-export const colunaCadastro = ["Motorista", "Telefone", "Placa", "CPF","Tipo produto","Produto", "Peso inicial", "Peso final", "Data chegada","Operação", "status"]
-
-const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
-
+const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const [mode, setMode] = useState<ThemeMode>('dark');
     const theme = APP_THEME[mode];
-
-    const toggleTheme = () => {
-        setMode((prev) => prev === 'dark' ? 'light' : 'dark');
-    };
-
-
     const isMobile = useIsMobile();
+    const [configOpen, setConfigOpen] = useState(false);
+    const [notifications,setNotifications] = useState<any[]>([]);
+
 
     const loaderRef = useRef<LoadingIndicatorRef>(null);
-
-    const [busca, setBusca] = useState("");
-
-    const [rows, setRows] = useState<CadastroRow[]>([])
-
-    const [isRefreshing, setIsRefreshing] = useState(false);
+    const offcanvasRef = useRef<OffcanvasRef>(null);
 
     const newRowRef = useRef<HTMLTableRowElement | null>(null);
 
-    const modalRef = useRef<ModalRef>(null);
 
-    const offcanvasRef = useRef<OffcanvasRef>(null);
-
+    const [busca, setBusca] = useState("");
+    const [rows, setRows] = useState<CadastroRow[]>([]);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [coluna, setColuna] = useState(colunaCadastro);
-
     const [status, setStatus] = useState<StatusDTO[]>();
-
     const [filtroAtivo, setFiltroAtivo] = useState<number | null>(null);
-
     const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
+    const [modoOperacao, setModoOperacao] = useState<boolean>(false);
 
-
-
-    const getPreCadastroVazio = (): RegistroCadastroDTO  => {
-
-
-
-        return {
-            identificador: 0,
-            nomeMotorista: "",
-            telefone: "",
-            placa: "",
-            cpf: "",
-            tipo: "",
-            produto: "",
-            origem: "",
-            peso: 0,
-            corVeiculo: "",
-            modelo: "",
-            marca: "",
-            prioridade: false,
-            ordem: 0,
-            previsaoChegada: undefined,
-            operacao: "",
-            confirmado: false
-        };
-    };
+    const getPreCadastroVazio = (): RegistroCadastroDTO => ({
+        identificador: 0, nomeMotorista: "", telefone: "", placa: "", cpf: "", tipo: "",
+        produto: "", origem: "", peso: 0, corVeiculo: "", modelo: "", marca: "",
+        prioridade: false, ordem: 0, previsaoChegada: undefined, operacao: "", confirmado: false
+    });
 
     const [preCadastro, setPreCadastro] = useState<RegistroCadastroDTO>(getPreCadastroVazio);
 
-    const [modoOperacao, setModoOperacao] = useState<boolean>(false);
 
-
+    const toggleTheme = () => setMode((prev) => prev === 'dark' ? 'light' : 'dark');
 
     const handlePreCadastro = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent) => {
-
         const target = e.target as { name: string; value: any; type?: string };
-        let {name, value, type} = target;
-
+        let { name, value, type } = target;
         if (!name) return;
         if (type === 'number' || name === 'peso' || name === 'ordem') {
             value = value === '' ? '' : Number(value);
         }
-
-        setPreCadastro((prev) => {
-            const estadoAtual = prev || getPreCadastroVazio();
-            return {...estadoAtual, [name]: value};
-        });
+        setPreCadastro((prev) => ({ ...prev, [name]: value }));
     }, []);
 
-    const submitPreCadastro = async () => {
-        if (!preCadastro) return;
 
+    useEffect(() => {
+        const onMessage = (data: WSMessage) => {
+
+            setNotifications(prev => {
+                const newList = [data, ...prev];
+                return newList.slice(0, 120);
+            });
+
+            toast.success(data.message || "Nova atualização recebida!", {
+                duration: 5000,
+                icon: '🔔',
+                style: {
+                    borderRadius: '8px',
+                    background: theme.background.paper,
+                    color: theme.text.primary,
+                    border: `1px solid ${theme.border.main}`
+                },
+            });
+        };
+
+        eventBus.on("messageReceived", onMessage);
+        return () => {
+            eventBus.off("messageReceived", onMessage);
+        };
+    }, [theme]);
+
+    const submitPreCadastro = async () => {
+        const {cpf,nomeMotorista,placa,modelo,marca,origem} = preCadastro;
+        let messageDefault = `Novo agendamento para ${nomeMotorista} cujo CPF ${cpf}.\n Veiculo: ${marca}-${modelo}-${placa}, com origem de ${origem}} `
+        console.log("submit chamado")
+        if (!preCadastro) return;
         try {
             loaderRef.current?.start();
-
             await ApiServices.cadastrar(preCadastro);
-
+            await ApiServices.notifyGroup("ROLE_LOGISTICA", messageDefault);
             await buscarTodosPreCadastro();
             offcanvasRef.current?.close();
-        } catch (err:any) {
-
-        } finally {
-            loaderRef.current?.done()
-        }
+        } catch (err) { console.error(err); } finally { loaderRef.current?.done(); }
     };
 
-    const handleClearForm = () => {
-        setPreCadastro(getPreCadastroVazio());
-    };
+    const handleClearForm = () => setPreCadastro(getPreCadastroVazio());
 
     const handleRowClick = (row: RegistroCadastroDTO) => {
-        const modo = 'confirmado' in row
+        const modo = 'confirmado' in row;
         setPreCadastro(row);
-        setModoOperacao(modo)
+        setModoOperacao(modo);
         offcanvasRef.current?.open();
     };
 
     const handleOrdenar = (tipo: 'asc' | 'desc') => {
         setOrdem(tipo);
         const sortedRows = [...rows].sort((a, b) => {
-            console.log(a.dataCriacao)
             const dataA = a.dataCriacao ? new Date(a.dataCriacao).getTime() : 0;
             const dataB = b.dataCriacao ? new Date(b.dataCriacao).getTime() : 0;
-            if (tipo === 'asc') return dataA - dataB;
-            else return dataB - dataA;
+            return tipo === 'asc' ? dataA - dataB : dataB - dataA;
         });
         setRows(sortedRows);
     };
@@ -173,439 +160,159 @@ const Principal = ({isModalOpen, setIsModalOpen}: ListaEsperaProps) => {
         setFiltroAtivo(null);
         const resultado = await ApiServices.buscarPorDescricao(busca);
         if (resultado.success && resultado.data) {
-            const novaRows = resultado.data.map((item: CadastroDTO) => ({...item}));
-            setRows(novaRows);
-        } else {
-            setRows([]);
-        }
+            setRows(resultado.data.map((item: CadastroDTO) => ({ ...item })));
+        } else { setRows([]); }
     };
 
     const buscarTodosStatus = async () => {
-        const {data, success} = await ApiServices.buscarTodosStatus();
-        if (success) {
-            setStatus(data);
-        }
-
-    }
+        const { data, success } = await ApiServices.buscarTodosStatus();
+        if (success) setStatus(data);
+    };
 
     const buscarTodosPreCadastro = async () => {
         try {
-            const {isSuccess }= await apiService.notifyUser("adminagrion", "Cade o carregamento seu maldito");
-
-            if(isSuccess){
-                console.log("MESSAGEM ENVIADA COM SUCESSO")
-            }else{
-                console.log("falha na comunicação")
-            }
-
-            const {data, success} = await ApiServices.buscarTodosPreCadastro();
-
+            setIsRefreshing(true);
+            const { data, success } = await ApiServices.buscarTodosPreCadastro();
             if (success && data) {
-                const novaRows = data.map((item: ViewTabelaPreCadastroDTO) => {
-                    return {...item}
-                })
-
-
-                const sorted = novaRows.sort((a: any, b: any) => {
+                const sorted = data.sort((a: any, b: any) => {
                     const dA = a.previsaoChegada ? new Date(a.previsaoChegada).getTime() : 0;
                     const dB = b.previsaoChegada ? new Date(b.previsaoChegada).getTime() : 0;
                     return dB - dA;
                 });
-
                 setRows(sorted);
                 setOrdem('desc');
             }
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-        } finally {
+        } finally { setIsRefreshing(false); }
+    };
 
-        }
-    }
-
-    const buscarPorStatus = useCallback(async (codigo: number, indexStatus: number, isBackgroundFetch = false) => {
+    const buscarPorStatus = useCallback(async (codigo: number, indexStatus: number) => {
         try {
             loaderRef.current?.start();
-            if (isBackgroundFetch) setIsRefreshing(true);
             setFiltroAtivo(indexStatus);
-            console.log(indexStatus)
             if (codigo === 1) {
-                setRows([])
-                setColuna(colunaPreCadastro)
+                setColuna(colunaPreCadastro);
                 await buscarTodosPreCadastro();
             } else {
-                setColuna(colunaCadastro)
-                setRows([])
+                setColuna(colunaCadastro);
                 const response = await ApiServices.buscarPorStatus(codigo);
-                const novaRows = response.data.map((item: ViewTabelaDTO) => ({...item}));
-                setRows(novaRows);
+                setRows(response.data.map((item: ViewTabelaDTO) => ({ ...item })));
             }
-
-        } catch (error) {
-            console.log(error)
-        } finally {
-            loaderRef.current?.done();
-        }
+        } finally { loaderRef.current?.done(); }
     }, []);
 
-    const fetchTodos = async () => {
-    }
+    const fetchTodos = () => {
+        setFiltroAtivo(null);
+        buscarTodosPreCadastro();
+    };
 
     useEffect(() => {
-
-        try {
-
-
-            buscarTodosStatus()
-            buscarPorStatus(3,2);
-
-        } catch (e) {
-            console.log(e)
-        } finally {
-            loaderRef.current?.done()
-        }
-
-
-    }, [setIsModalOpen, isModalOpen])
+        buscarTodosStatus();
+        buscarPorStatus(3, 2);
+    }, [setIsModalOpen, isModalOpen]);
 
     const buttonActions = [
-        {
-            id: "1",
-            title: "Atualizar",
-            background: "#3b82f6",
-            hover: "#2563eb",
-            acao: () => {
-                buscarTodosPreCadastro()
-            },
-            icon: isRefreshing
-                ? (<CircularProgress size={20} sx={{color: "#FFFFFF"}}/>)
-                : <CachedIcon sx={{color: "#FFFFFF"}}/>
-        },
-        {
-            id: "2",
-            title: "Cadastrar",
-            background: "#10b981",
-            hover: "#059669",
-            acao: () => {
-                handleClearForm();
-                offcanvasRef.current?.open();
-            },
-            icon: <AddCircleIcon sx={{color: "#FFFFFF"}}/>
-        },
-        {
-            id: "3",
-            title: "Limpar filtro",
-            background: "#F16D34",
-            hover: "#DE802B",
-            acao: () => {
-                fetchTodos();
-            },
-            icon: isRefreshing
-                ? (<CircularProgress size={20} sx={{color: "#FFFFFF"}}/>)
-                : <CachedIcon sx={{color: "#FFFFFF"}}/>
-        },
-        {
-            id: "4",
-            title: "Ajuda",
-            background: mode === 'dark' ? "#374151" : "#D1D5DB",
-            hover: mode === 'dark' ? "#4b5563" : "#9CA3AF",
-            acao: () => {
-                offcanvasRef.current?.open()
-            },
-            icon: <HelpOutlineIcon sx={{color: mode === 'dark' ? "#FFFFFF" : theme.text.primary}}/>
-        }
+        { id: "1", title: "Atualizar", background: "#3b82f6", hover: "#2563eb", acao: buscarTodosPreCadastro, icon: isRefreshing ? <CircularProgress size={20} color="inherit" /> : <CachedIcon /> },
+        { id: "2", title: "Cadastrar", background: "#10b981", hover: "#059669", acao: () => { handleClearForm(); offcanvasRef.current?.open(); }, icon: <AddCircleIcon /> },
+        { id: "3", title: "Limpar", background: "#F16D34", hover: "#DE802B", acao: fetchTodos, icon: <CachedIcon /> },
+        { id: "4", title: "Ajuda", background: mode === 'dark' ? "#374151" : "#D1D5DB", hover: mode === 'dark' ? "#4b5563" : "#9CA3AF", acao: () => { }, icon: <HelpOutlineIcon /> }
     ];
 
     return (
-        <Box sx={{
-            height: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            backgroundColor: theme.background.main,
-            width: "100%",
-            overflow: "hidden",
-            transition: "background-color 0.3s ease"
-        }}>
-            <LoadingIndicator ref={loaderRef}/>
+        <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: theme.background.main, width: "100%", overflow: "hidden" }}>
+            <LoadingIndicator ref={loaderRef} />
 
 
-            <OffCanvasDrawer
-                ref={offcanvasRef}
-                title=""
-                position="left"
-                width={700}
-                currentTheme={theme}
-            >
-
-                <CadastroForm
-                    cadastro={preCadastro}
-                    handleCadastro={handlePreCadastro}
-                    modoOperacao={modoOperacao}
-                    status={status!}
-                    submitCadastro={submitPreCadastro}
-                    clearForm={handleClearForm}
-                />
+            <OffCanvasDrawer ref={offcanvasRef} title="Registro de Carga" position="left" width={700} currentTheme={theme}>
+                <CadastroForm cadastro={preCadastro} handleCadastro={handlePreCadastro} modoOperacao={modoOperacao} status={status!} submitCadastro={submitPreCadastro} clearForm={handleClearForm} />
             </OffCanvasDrawer>
 
-            <CenteredModal
-                ref={modalRef}
-                title="Formulário Encapsulado"
-                maxWidth="md" children={undefined}
-            />
 
-            <Box sx={{
-                padding: "24px 24px 0 24px",
-                width: "100%",
-                boxSizing: "border-box",
-                flexShrink: 0
-            }}>
-                <Box sx={{
-                    display: "flex",
-                    flexDirection: isMobile ? "column" : "row",
-                    justifyContent: "space-between",
-                    alignItems: isMobile ? "flex-start" : "center",
-                    mb: 3
-                }}>
-                    <Box>
-                        <Typography variant="h4" sx={{
-                            fontWeight: 800,
-                            color: theme.text.primary,
-                            fontSize: isMobile ? '1.5rem' : '2rem',
-                            letterSpacing: '-0.5px'
-                        }}>
-                           AGRION - Gestão de cargas
-                        </Typography>
-                        <Typography variant="body1" sx={{color: theme.text.secondary, mt: 0.5}}>
-                            Gerenciador de cargas e operações.
-                        </Typography>
+            <Drawer anchor="right" open={configOpen} onClose={() => setConfigOpen(false)} PaperProps={{ sx: { width: isMobile ? '100%' : 400, backgroundColor: theme.background.paper, borderLeft: `1px solid ${theme.border.main}` } }}>
+                <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography variant="h6" fontWeight={800} color={theme.text.primary}>Notificações</Typography>
+                        <IconButton onClick={() => setConfigOpen(false)}><CloseIcon /></IconButton>
+                    </Stack>
+                    <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+                        {notifications.length === 0 ? (
+                            <Stack alignItems="center" sx={{ mt: 10, opacity: 0.3 }}><MessageIcon sx={{ fontSize: 48 }} /><Typography>Nenhuma mensagem</Typography></Stack>
+                        ) : (
+                            <Stack spacing={2}>{notifications.map((n, i) => (<Box key={i} sx={{ p: 2,  bgcolor:"orange", borderRadius: 2,color:"black", border: `1px solid ${theme.border.divider}` }}><Typography variant="body2">{n.message}</Typography></Box>))}</Stack>
+                        )}
                     </Box>
+                    <Divider sx={{ my: 3 }} />
+                    <Button fullWidth variant="outlined" startIcon={mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />} onClick={toggleTheme}>Modo {mode === 'dark' ? 'Claro' : 'Escuro'}</Button>
+                </Box>
+            </Drawer>
 
-                    <Stack direction={isMobile ? "column" : "row"} spacing={1.5} alignItems="center"
-                           sx={{mt: isMobile ? 2 : 0}}>
 
-                        <Tooltip title={mode === 'dark' ? "Modo Claro" : "Modo Escuro"}>
-                            <IconButton onClick={toggleTheme}
-                                        sx={{color: theme.text.primary, border: `1px solid ${theme.border.main}`}}>
-                                {mode === 'dark' ? <LightModeIcon/> : <DarkModeIcon/>}
-                            </IconButton>
-                        </Tooltip>
-                        {buttonActions.map((btn) => (
-                            <Button
-                                key={btn.id}
-                                variant="contained"
-                                startIcon={btn.icon}
-                                onClick={btn.acao}
-                                sx={{
-                                    backgroundColor: btn.background,
-                                    color: btn.id === '4' && mode === 'light' ? theme.text.primary : "#FFF",
-                                    textTransform: "none",
-                                    fontWeight: 600,
-                                    borderRadius: "8px",
-                                    padding: "6px 16px",
-                                    boxShadow: "none",
-                                    "&:hover": {
-                                        backgroundColor: btn.hover,
-                                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.2)"
-                                    }
-                                }}
-                            >
+            <Box sx={{ p: "20px 24px", bgcolor: theme.background.paper, borderBottom: `1px solid ${theme.border.divider}`, flexShrink: 0 }}>
+                <Stack direction={isMobile ? "column" : "row"} justifyContent="space-between" alignItems={isMobile ? "flex-start" : "center"} spacing={2}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        <Box sx={{ width: 58, height: 58,  borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                            <img src="src/assets/logo/logoAgrion.jpg" width={90} height={60} alt="logoAgrion" />
+                        </Box>
+                        <Box>
+                            <Typography variant="h5" sx={{ fontWeight: 900, color: theme.text.primary, letterSpacing: '-1px' }}>
+                                AGRION <span style={{ color: theme.text.secondary, fontWeight: 400 }}>Gestão</span>
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: theme.text.secondary, fontWeight: 700, textTransform: 'uppercase' }}>Logística e Operações</Typography>
+                        </Box>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                        {!isMobile && buttonActions.map((btn) => (
+                            <Button key={btn.id} variant="contained" startIcon={btn.icon} onClick={btn.acao} sx={{ bgcolor: btn.background, borderRadius: '10px', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: btn.hover } }}>
                                 {btn.title}
                             </Button>
                         ))}
-
+                        <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                        <Badge badgeContent={notifications.length} color="error">
+                            <IconButton onClick={() => setConfigOpen(true)} sx={{ border: `1px solid ${theme.border.main}`, color: theme.text.primary }}><NotificationsIcon /></IconButton>
+                        </Badge>
+                        <IconButton onClick={() => setConfigOpen(true)} sx={{ border: `1px solid ${theme.border.main}`, color: theme.text.primary }}><SettingsIcon /></IconButton>
                     </Stack>
-                </Box>
+                </Stack>
+            </Box>
 
 
-                <Box sx={{mb: 3}}>
-                    <TextField
-                        fullWidth
-                        placeholder="Pesquisar por motorista, placa, CPF ou número da ordem..."
-                        variant="outlined"
-                        value={busca}
-                        onChange={(e) => setBusca(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") buscarPorDescricao();
-                        }}
-                        sx={{
-                            "& .MuiOutlinedInput-root": {
-                                borderRadius: "8px",
-                                backgroundColor: theme.background.paper, // Tema
-                                color: theme.text.primary,
-                                transition: "all 0.2s",
-                                "& fieldset": {borderColor: theme.border.main},
-                                "&:hover fieldset": {borderColor: theme.text.disabled},
-                                "&.Mui-focused fieldset": {borderColor: theme.border.focus},
-                                "& input::placeholder": {color: theme.text.disabled}
-                            }
-                        }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search sx={{color: theme.text.disabled}}/>
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                </Box>
+            <Box sx={{ p: "24px 24px 0 24px", flexShrink: 0 }}>
+                <TextField
+                    fullWidth
+                    placeholder="Pesquisar por motorista, placa, CPF ou número da ordem..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") buscarPorDescricao(); }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: theme.background.paper,color:theme.text.secondary } }}
+                    InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ color: theme.text.disabled }} /></InputAdornment> }}
+                />
 
-
-                <Box sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    mb: 2,
-                    gap: 2,
-                    width: "100%"
-                }}>
-                    {/* --- ESQUERDA: FILTROS DE STATUS --- */}
-                    <Box sx={{display: "flex", alignItems: "center", gap: 1.5}}>
-                        <Typography variant="caption" sx={{
-                            fontWeight: 700,
-                            color: theme.text.disabled,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                        }}>
-                            Filtros Rápidos:
-                        </Typography>
-
-                        <Chip
-                            label="Todos"
-                            onClick={() => fetchTodos()}
-                            sx={{
-                                height: 28,
-                                backgroundColor: filtroAtivo === null ? theme.action.inactiveFilterBg : "transparent",
-                                color: filtroAtivo === null ? theme.text.primary : theme.text.secondary,
-                                fontWeight: 700,
-                                border: filtroAtivo === null ? "none" : `1px solid ${theme.border.main}`,
-                                "&:hover": {backgroundColor: theme.background.hover}
-                            }}
-                        />
-
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 3, mb: 1 }} flexWrap="wrap" gap={2}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, textTransform: 'uppercase' }}>Filtros:</Typography>
+                        <Chip label="Todos" onClick={fetchTodos} sx={{ height: 28, fontWeight: 700, bgcolor: filtroAtivo === null ? theme.action.inactiveFilterBg : "transparent" }} />
                         {status?.map((value, index) => (
-                            <Box
-                                key={index}
-                                onClick={() => buscarPorStatus(value.id, index)}
-                                sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    flexWrap: "wrap",
-                                    padding: "4px 12px",
-                                    borderRadius: "99px",
-                                    cursor: "pointer",
-                                    border: "1px solid",
-                                    borderColor: filtroAtivo === index ? value.corHexadecimal : theme.border.main,
-                                    backgroundColor: filtroAtivo === index ? `${value.corHexadecimal}15` : "transparent",
-                                    transition: "all 0.2s",
-                                    "&:hover": {
-                                        borderColor: value.corHexadecimal,
-                                        backgroundColor: `${value.corHexadecimal}10`
-                                    }
-                                }}
-                            >
-                                <Box sx={{
-                                    width: 6, height: 6, borderRadius: "50%",
-                                    backgroundColor: value.corHexadecimal, mr: 1,
-                                    boxShadow: `0 0 8px ${value.corHexadecimal}`
-                                }}/>
-                                <Typography variant="body2" sx={{
-                                    fontWeight: 500,
-                                    color: filtroAtivo === index ? theme.text.primary : theme.text.secondary,
-                                    fontSize: '0.75rem'
-                                }}>
-                                    {value.descricao}
-                                </Typography>
+                            <Box key={index} onClick={() => buscarPorStatus(value.id, index)} sx={{ display: "flex", alignItems: "center", px: 1.5, py: 0.5, borderRadius: "99px", cursor: "pointer", border: "1px solid", borderColor: filtroAtivo === index ? value.corHexadecimal : theme.border.main, bgcolor: filtroAtivo === index ? `${value.corHexadecimal}15` : "transparent" }}>
+                                <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: value.corHexadecimal, mr: 1, boxShadow: `0 0 8px ${value.corHexadecimal}` }} />
+                                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem',color:theme.text.secondary }}>{value.descricao}</Typography>
                             </Box>
                         ))}
-                    </Box>
+                    </Stack>
 
-
-                    <Box sx={{display: "flex", alignItems: "center", gap: 3}}>
-
-
-                        <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-                            <Typography variant="caption"
-                                        sx={{
-                                            fontWeight: 700,
-                                            color: theme.text.disabled,
-                                            textTransform: 'uppercase',
-                                            mr: 1
-                                        }}>
-                                Ordenar Por:
-                            </Typography>
-
-                            <Button
-                                size="small"
-                                variant={ordem === 'desc' ? "contained" : "outlined"}
-                                startIcon={<ArrowDownwardIcon/>}
-                                onClick={() => handleOrdenar('desc')}
-                                sx={{
-                                    borderRadius: "20px",
-                                    textTransform: "none",
-                                    fontSize: "0.75rem",
-                                    padding: "2px 12px",
-                                    backgroundColor: ordem === 'desc' ? "#3b82f6" : "transparent",
-                                    borderColor: ordem === 'desc' ? "transparent" : theme.border.main,
-                                    color: ordem === 'desc' ? "#fff" : theme.text.secondary,
-                                    "&:hover": {
-                                        backgroundColor: ordem === 'desc' ? "#2563eb" : theme.background.hover,
-                                        borderColor: ordem === 'desc' ? "transparent" : theme.text.disabled,
-                                    }
-                                }}
-                            >
-                                Mais recentes
-                            </Button>
-
-                            <Button
-                                size="small"
-                                variant={ordem === 'asc' ? "contained" : "outlined"}
-                                startIcon={<ArrowUpwardIcon/>}
-                                onClick={() => handleOrdenar('asc')}
-                                sx={{
-                                    borderRadius: "20px",
-                                    textTransform: "none",
-                                    fontSize: "0.75rem",
-                                    padding: "2px 12px",
-                                    backgroundColor: ordem === 'asc' ? "#3b82f6" : "transparent",
-                                    borderColor: ordem === 'asc' ? "transparent" : theme.border.main,
-                                    color: ordem === 'asc' ? "#fff" : theme.text.secondary,
-                                    "&:hover": {
-                                        backgroundColor: ordem === 'asc' ? "#2563eb" : theme.background.hover,
-                                        borderColor: ordem === 'asc' ? "transparent" : theme.text.disabled,
-                                    }
-                                }}
-                            >
-                                Mais antigos
-                            </Button>
-                        </Box>
-
-                        <Box sx={{width: "1px", height: "24px", backgroundColor: theme.border.divider}}/>
-
-
-                    </Box>
-                </Box>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, mr: 1 }}>ORDEM:</Typography>
+                        <Button size="small" variant={ordem === 'desc' ? "contained" : "outlined"} startIcon={<ArrowDownwardIcon />} onClick={() => handleOrdenar('desc')} sx={{ borderRadius: "20px", fontSize: "0.75rem" }}>Recentes</Button>
+                        <Button size="small" variant={ordem === 'asc' ? "contained" : "outlined"} startIcon={<ArrowUpwardIcon />} onClick={() => handleOrdenar('asc')} sx={{ borderRadius: "20px", fontSize: "0.75rem" }}>Antigos</Button>
+                    </Stack>
+                </Stack>
             </Box>
 
 
-            <Box sx={{
-                flex: 1,
-                width: "100%",
-                padding: "0 24px 24px 24px",
-                boxSizing: "border-box",
-                overflow: "hidden"
-            }}>
-                <Listagem
-                    rows={rows}
-                    coluna={coluna}
-                    fetchTodos={fetchTodos}
-                    newRowRef={newRowRef}
-                    handleRowClick={handleRowClick}
-                    status={status!}
-                    currentTheme={theme}
-                />
+            <Box sx={{ flex: 1, width: "100%", p: "0 24px 24px 24px", boxSizing: "border-box", overflow: "hidden" }}>
+                <Listagem rows={rows} coluna={coluna} fetchTodos={fetchTodos} newRowRef={newRowRef} handleRowClick={handleRowClick} status={status!} currentTheme={theme} />
             </Box>
         </Box>
-    )
+    );
 }
 
 export default Principal;

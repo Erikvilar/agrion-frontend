@@ -4,6 +4,8 @@ import './index.module.css';
 import {useNotification} from "@/hooks/useNotification";
 import {ActionType} from "@/components/modal-help/ModalHelper";
 import {useEffect} from "react";
+import {disconnectWebSocket, initializeWebSocket} from "@/services/websocket/InitializeWebSocket";
+
 
 function App() {
   const {NotificationModal,showNotification} = useNotification();
@@ -19,6 +21,19 @@ function App() {
     };
   }, [showNotification]);
 
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const roles = ["ROLE_LOGISTICA","ROLE_PORTARIA","ROLE_GERENCIAL"];
+
+    if (token) {
+      initializeWebSocket(roles, token);
+    }
+
+    return () => {
+      disconnectWebSocket();
+    };
+  }, []);
 
   return (
 <div >

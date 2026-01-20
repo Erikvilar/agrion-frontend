@@ -1,66 +1,78 @@
-import { Client, IFrame, IMessage } from "@stomp/stompjs";
-import EventEmitter from "eventemitter3";
-
-export interface WSMessage {
-    message: string;
-    [key: string]: any;
-}
-
-export const eventEmitter = new EventEmitter<{
-    messageReceived: (data: WSMessage) => void;
-}>();
+import { Client, IMessage } from "@stomp/stompjs";
+import eventBus, { WSMessage } from "./eventBus"
+import apiConfig from "@/api/api.config";
 
 let client: Client | null = null;
 
 export const initializeWebSocket = (roles: string[] = [], token: string): void => {
-    if (!token || (client && client.active)) return;
+    if (!token) return;
+    if (client?.active) {
+        console.log("WebSocket já está ativo. Ignorando nova tentativa.");
+        return;
+    }
+
+    if (client) {
+        client.deactivate();
+    }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const host = "192.168.100.105:8081";
-    const contextPath = "/v1/agrion";
+
+    const host =  apiConfig.URL;
+
 
     client = new Client({
-        brokerURL: `${protocol}//${host}${contextPath}/ws/websocket`,
+        brokerURL: `${protocol}//${host}/ws/websocket`,
         connectHeaders: {
             Authorization: `Bearer ${token}`
         },
-        debug: (str) => console.log("STOMP Debug:", str),
         reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        heartbeatIncoming: 10000,
+        heartbeatOutgoing: 10000,
+        debug: (str) => {
+            if (process.env.NODE_ENV === 'development' || 'local') {
+                if (str.includes("Web Socket Opened") || str.includes("DISCONNECT")) {
+                    console.log("WS Status:", str);
+                }
+            }
+        },
     });
 
-    // Atribuindo os callbacks fora do construtor para evitar o aviso de "não usado"
-    client.onConnect = (frame: IFrame) => {
-        console.log("WebSocket Nativo Conectado! Frame:", frame);
+    client.onConnect = () => {
 
-        // Inscrição Individual
         client?.subscribe('/user/queue/notifications', (msg: IMessage) => {
-            try {
-                const data = JSON.parse(msg.body);
-                eventEmitter.emit("messageReceived", data);
-            } catch (e) {
-                // Se o Java enviar String pura, encapsulamos num objeto
-                eventEmitter.emit("messageReceived", { message: msg.body });
-            }
+            processMessage(msg);
         });
 
-        // Inscrição por Roles
-        roles.forEach((role: string) => {
-            client?.subscribe(`/topic/role/${role}`, (msg: IMessage) => {
-                try {
-                    const data = JSON.parse(msg.body);
-                    eventEmitter.emit("messageReceived", data);
-                } catch (e) {
-                    eventEmitter.emit("messageReceived", { message: msg.body });
-                }
+
+        if (roles.includes("ROLE_LOGISTICA")) {
+            client?.subscribe(`/topic/role/ROLE_LOGISTICA`, (msg: IMessage) => {
+                processMessage(msg);
             });
-        });
+        }
+        if (roles.includes("ROLE_PORTARIA")) {
+            client?.subscribe(`/topic/role/ROLE_PORTARIA`, (msg: IMessage) => {
+                processMessage(msg);
+            });
+        }
+        if (roles.includes("ROLE_GERENCIAL")) {
+            client?.subscribe(`/topic/role/ROLE_GERENCIAL`, (msg: IMessage) => {
+                processMessage(msg);
+            });
+        }
     };
 
-    client.onStompError = (frame: IFrame) => {
-        console.error("Erro STOMP detalhado:", frame.headers['message']);
-        console.error("Corpo do erro:", frame.body);
+    const processMessage = (msg: IMessage) => {
+        try {
+            const data: WSMessage = JSON.parse(msg.body);
+            eventBus.emit("messageReceived", data);
+        } catch (e) {
+            eventBus.emit("messageReceived", { message: msg.body });
+        }
+    };
+
+    client.onStompError = () => {
+
+        console.error("Erro de comunicação segura.");
     };
 
     client.activate();
@@ -70,6 +82,5 @@ export const disconnectWebSocket = (): void => {
     if (client) {
         client.deactivate();
         client = null;
-        console.log("WebSocket desconectado.");
     }
 };
