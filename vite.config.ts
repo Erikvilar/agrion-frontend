@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import * as path from "path"
-
+import {isProd} from "./src/api/api.config";
 export default defineConfig({
   plugins: [react()],
   define: {
@@ -13,10 +13,10 @@ export default defineConfig({
     },
   },
   server: {
-
+  //dominio
     proxy: {
       '/v1/agrion/ws': {
-        target: 'http://localhost:8081',
+        target: isProd ? "https://back.stackpanel.com.br" : "https://localhost:8081",
         ws: true,
       },
     }
