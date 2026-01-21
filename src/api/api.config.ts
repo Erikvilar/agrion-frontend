@@ -6,7 +6,7 @@ export enum AppMode {
 }
 
 
-const currentMode: AppMode = AppMode.LOCAL as AppMode;
+const currentMode: AppMode = AppMode.PRODUCTION as AppMode;
 
 interface ApiConfig {
   BASE_URL: string;
