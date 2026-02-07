@@ -8,19 +8,19 @@ RUN npm run build
 
 FROM nginx:stable-alpine
 
-
 COPY --from=build /app/dist /usr/share/nginx/html
 
 
 RUN echo 'server { \
     listen 80; \
-    location /agrion/ { \
+    # Atende tanto /agrion quanto /agrion/ \
+    location /agrion { \
         alias /usr/share/nginx/html/; \
+        index index.html; \
         try_files $uri $uri/ /agrion/index.html; \
     } \
-    # Redireciona a raiz do container para a subpasta \
     location = / { \
-        return 301 /agrion/; \
+        return 301 /agrion; \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
