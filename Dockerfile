@@ -13,7 +13,6 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 RUN echo 'server { \
     listen 80; \
-    # Atende tanto /agrion quanto /agrion/ \
     location /agrion { \
         alias /usr/share/nginx/html/; \
         index index.html; \
