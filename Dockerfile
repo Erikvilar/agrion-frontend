@@ -14,9 +14,13 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 RUN echo 'server { \
     listen 80; \
-    location / { \
-        root /usr/share/nginx/html; \
-        try_files $uri $uri/ /index.html; \
+    location /agrion/ { \
+        alias /usr/share/nginx/html/; \
+        try_files $uri $uri/ /agrion/index.html; \
+    } \
+    # Redireciona a raiz do container para a subpasta \
+    location = / { \
+        return 301 /agrion/; \
     } \
 }' > /etc/nginx/conf.d/default.conf
 
