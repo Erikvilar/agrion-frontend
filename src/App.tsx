@@ -1,6 +1,6 @@
 
 import RouterSwitch from "./router/RouterSwitch";
-import './index.module.css';
+import './index.css';
 import {useNotification} from "@/hooks/useNotification";
 import {ActionType} from "@/components/modal-help/ModalHelper";
 import {useEffect} from "react";

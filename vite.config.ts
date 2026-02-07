@@ -7,16 +7,17 @@ export default defineConfig({
   define: {
     global: 'window',
   },
+  base: '/agrion/',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   server: {
-  //dominio
     proxy: {
       '/v1/agrion/ws': {
-        target: isProd ? "https://back.stackpanel.com.br" : "https://localhost:8081",
+
+        target: isProd ? "https://webdataflux.cloud" : "http://localhost:8081",
         ws: true,
       },
     }
