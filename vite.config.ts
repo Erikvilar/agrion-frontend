@@ -8,6 +8,7 @@ export default defineConfig({
     global: 'window',
   },
   base: '/agrion',
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
