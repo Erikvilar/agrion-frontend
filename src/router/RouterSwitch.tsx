@@ -71,7 +71,7 @@ const RouterSwitch = () => {
             {NotificationModal}
             <Routes>
 
-                <Route path="/agrion" element={<LoginScreen />} />
+                <Route path="/front/agrion" element={<LoginScreen />} />
                 <Route path="/historico" element={<Historico />} />
                 <Route path="/suporte" element={< Suporte/>} />
                 <Route path="/principal" element={<Principal setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen} />} />

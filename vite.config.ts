@@ -7,7 +7,7 @@ export default defineConfig({
   define: {
     global: 'window',
   },
-  base: '/agrion',
+  base: '/front/agrion',
 
   resolve: {
     alias: {
