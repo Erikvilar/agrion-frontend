@@ -4,6 +4,7 @@ import {
     Visibility,
     VisibilityOff
 } from "@mui/icons-material";
+
 import {
     Box,
     Button,
@@ -14,93 +15,36 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import  { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import  { useRef } from "react";
 
 import LoadingIndicator, { type LoadingIndicatorRef } from "../../components/loading-indicator/Component";
-import { ActionType } from "@/components/modal-informativo/Component";
+
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useNotification } from "@/hooks/useNotification";
-import type UserDTO from "../../model/dto/UserDTO.ts";
-import ApiServices from "../../services/api-service";
+
 import { APP_THEME } from "@/styles/themeConstants";
-import {initializeWebSocket} from "@/services/websocket/InitializeWebSocket";
 
-const BG_IMAGE_URL = "https://rehagro.com.br/blog/wp-content/uploads/2025/04/capa-agricultura-sustentavel.jpeg";
+import {useLogin} from "@/hooks/useLogin";
 
-export const LoginScreen = () => {
+const BG_IMAGE_URL = "https://assets.datagro.com/wp-content/uploads/2020/06/Industria_cana.jpg";
+
+export const Login = () => {
 
     const theme = APP_THEME['default'];
-
     const isMobile = useIsMobile();
-    const navigate = useNavigate();
-    const { showNotification, NotificationModal } = useNotification();
     const loaderRef = useRef<LoadingIndicatorRef>(null);
+    const {
+        handleClickShowPassword,
+        handleMouseDownPassword,
+        handleLoginChange,
+        handleKeyDown,
+        submitLogin,
+        NotificationModal,
+        login,
+        password,
+        showPassword
+    } = useLogin( loaderRef,isMobile)
 
-    const [showPassword, setShowPassword] = useState(false);
-    const [user, setUser] = useState<UserDTO>({
-        login: "",
-        password: "",
-        avatar: ""
-    });
-
-    const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setUser((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleClickShowPassword = () => setShowPassword((show) => !show);
-    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault();
-    };
-
-    const validateForm = (): boolean => {
-        if (!user?.login.trim()) {
-            showNotification(ActionType.Warning, "Login inválido", "Por favor, preencha o campo de login.", () => {});
-            return false;
-        }
-        if (!user?.password.trim()) {
-            showNotification(ActionType.Warning, "Senha vazia", "Por favor, informe sua senha.", () => {});
-            return false;
-        }
-        return true;
-    };
-
-    const submitLogin = async () => {
-        if (!validateForm()) return;
-
-        loaderRef.current?.start();
-
-        try {
-            const { success, data, message,} = await ApiServices.login(user);
-
-            if (success && data) {
-
-                const {token, fullName, login, avatar,roles} = data;
-
-                localStorage.setItem("token", token);
-                localStorage.setItem("user", fullName || "");
-                localStorage.setItem("login", login);
-                localStorage.setItem("avatar", avatar || "");
-                localStorage.setItem("roles", JSON.stringify(roles));
-
-                initializeWebSocket(roles,token);
-
-                navigate(isMobile ? "/controle":"/principal");
-            } else {
-                showNotification(ActionType.Warning, "Falha no Login", message || "Credenciais inválidas", () => {});
-            }
-        } catch (error) {
-            console.error(error);
-            showNotification(ActionType.Error, "Erro de Conexão", "Não foi possível conectar ao servidor.", () => {});
-        } finally {
-            loaderRef.current?.done();
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') submitLogin();
-    };
 
     return (
         <Box sx={{
@@ -192,7 +136,7 @@ export const LoginScreen = () => {
                             fullWidth
                             placeholder="Usuário"
                             name="login"
-                            value={user.login}
+                            value={login}
                             onChange={handleLoginChange}
                             onKeyDown={handleKeyDown}
                             variant="outlined"
@@ -231,7 +175,7 @@ export const LoginScreen = () => {
                             placeholder="Senha"
                             name="password"
                             type={showPassword ? 'text' : 'password'}
-                            value={user.password}
+                            value={password}
                             onChange={handleLoginChange}
                             onKeyDown={handleKeyDown}
                             variant="outlined"

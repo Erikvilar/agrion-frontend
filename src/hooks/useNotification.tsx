@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import Notification from "./Notification";
+import Notification from "../components/notification-component/Notification";
 import type { ActionType } from "../components/modal-informativo/Component";
 
 export const useNotification = () => {
