@@ -73,17 +73,17 @@ export const APP_THEME: Record<ThemeMode, ColorPalette> = {
 
     light: {
         background: {
-            main: "#f1f5f9",    // Slate 100 (Fundo claro, limpo e profissional)
-            paper: "#ffffff",   // Branco puro (Cards saltam aos olhos sobre o fundo Slate 100)
+            main: "#E8E2D8",    // Slate 100 (Fundo claro, limpo e profissional)
+            paper: "#E8E2D8",   // Branco puro (Cards saltam aos olhos sobre o fundo Slate 100)
             hover: "#e2e8f0",   // Slate 200 (Hover sutil)
         },
         // MANTENDO A TABELA ESCURA NO MODO LIGHT (Padrão Dashboard Industrial)
         table: {
-            primary: "#f8fafc",   // Slate 50 (Texto claro na tabela escura)
-            secondary: "#94a3b8", // Slate 400 (Texto secundário)
-            main: "#1e2933",      // Slate 900 (Fundo da tabela - Contraste forte com o bg #f1f5f9)
-            paper: "#1e293b",     // Slate 800 (Cabeçalhos/Linhas alternadas)
-            hover: "#334155",     // Slate 700 (Hover nas linhas da tabela)
+            primary: "#15173D",   // Slate 50 (Texto claro na tabela escura)
+            secondary: "#25343F", // Slate 400 (Texto secundário)
+            main: "#E8E2D8",      // Slate 900 (Fundo da tabela - Contraste forte com o bg #f1f5f9)
+            paper: "#E8E2D8",     // Slate 800 (Cabeçalhos/Linhas alternadas)
+            hover: "#F2A65A",     // Slate 700 (Hover nas linhas da tabela)
         },
         text: {
             primary: "#0f172a",   // Slate 900 (Texto escuro para o resto da tela)

@@ -15,7 +15,7 @@ import  { memo, useCallback, useEffect, useState } from "react";
 import { useNotification } from "@/hooks/useNotification";
 import type StatusDTO from '../../../model/dto/StatusDTO.ts';
 
-import { type ColorPalette } from "@/styles/themeConstants";
+import {type ColorPalette, ThemeMode} from "@/styles/themeConstants";
 import {CadastroRow} from "@/pages/principal/Principal";
 import RegistroCadastroDTO from "@/model/dto/registro/RegistroCadastroDTO";
 
@@ -29,6 +29,7 @@ interface TabelaProps {
     newRowRef: any;
     coluna:any;
     currentTheme: ColorPalette;
+    mode:ThemeMode;
 }
 
 interface TableRowItemProps {
@@ -37,6 +38,7 @@ interface TableRowItemProps {
     handleMudarStatus: (row: CadastroRow) => void;
     handleRowClick: (row: RegistroCadastroDTO) => void;
     theme: ColorPalette;
+    mode:ThemeMode
     statusList: StatusDTO[];
 }
 
@@ -74,7 +76,7 @@ const decidirStatusBotao = (row:CadastroRow, statusList:StatusDTO[]) =>{
 
 }
 
-const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,theme }: TableRowItemProps) => {
+const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,theme,mode }: TableRowItemProps) => {
 
 
     const {statusColor, statusLabel} = decidirStatusBotao(row, statusList);
@@ -106,8 +108,12 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
             variant="contained" size="small"
             sx={{
                 minWidth: 90,
-                color: statusColor,
-                backgroundColor: `${statusColor}15`,
+
+                color: mode === 'light' ? "black": statusColor,
+
+
+                backgroundColor: mode === 'light' ? `${statusColor}` : `${statusColor}15`,
+
                 border: `1px solid ${statusColor}40`,
                 textTransform: "none",
                 borderRadius: "6px",
@@ -117,7 +123,7 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
                 boxShadow: "none",
                 "&:hover": {
                     backgroundColor: statusColor,
-                    color: "#FFFFFF"
+                    color:  'white'
                 }
             }}>
             {statusLabel}
@@ -138,8 +144,8 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
                     <Typography variant="body2" fontWeight={700} color={theme.table.primary}>
                         {row.nomeMotorista ? row.nomeMotorista.toUpperCase() : "-"}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: "yellow", fontWeight: 600, fontSize: "0.9rem", mt: 0.5 }}>
-                        Origem: <Typography variant="caption" sx={{ color: "white", fontWeight: 600, fontSize: "0.9rem", mt: 0.5 }}>{origemCarga || "Não inf."}</Typography>
+                    <Typography variant="caption" sx={{ color: "green", fontWeight: 600, fontSize: "0.9rem", mt: 0.5 }}>
+                        Origem: <Typography variant="caption" sx={{ color:theme.table.secondary, fontWeight: 600, fontSize: "0.9rem", mt: 0.5 }}>{origemCarga || "Não inf."}</Typography>
                     </Typography>
                 </Box>
             </TableCell>
@@ -163,7 +169,7 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
     );
 });
 
-const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,coluna }: TabelaProps) => {
+const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,coluna,mode }: TabelaProps) => {
     const [tableRows, setTableRows] = useState<CadastroRow[]>(rows);
     const { NotificationModal, showNotification } = useNotification();
 
@@ -247,6 +253,7 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
                                         key={`${row.cpf}-${index}`}
                                         index={index}
                                         row={row}
+                                        mode={mode}
                                         handleMudarStatus={handleMudarStatus}
                                         handleRowClick={handleRowClick}
                                         statusList={status}

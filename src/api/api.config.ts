@@ -14,8 +14,8 @@ interface ApiConfig {
 }
 
 const localConfig: ApiConfig = {
-  BASE_URL: "http://localhost:8090/v1/agrion/",
-  URL: "localhost:8090/v1/agrion",
+  BASE_URL: "http://192.168.100.105:8090/v1/agrion/",
+  URL: "192.168.100.105:8090/v1/agrion",
   TIMEOUT_MS: 10000,
 };
 

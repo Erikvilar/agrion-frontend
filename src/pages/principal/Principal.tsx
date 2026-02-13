@@ -250,7 +250,7 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                 <Stack direction={isMobile ? "column" : "row"} justifyContent="space-between" alignItems={isMobile ? "flex-start" : "center"} spacing={2}>
                     <Stack direction="row" spacing={2} alignItems="center">
                         <Box sx={{ width: 58, height: 58,  borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                            <img src="src/assets/logo/logoAgrion.jpg" width={90} height={60} alt="logoAgrion" />
+                            <img src="https://github.com/Erikvilar/agrion-frontend/blob/develop/src/assets/logo/logoAgrion.jpg?raw=true" width={90} height={60} alt="logoAgrion" />
                         </Box>
                         <Box>
                             <Typography variant="h5" sx={{ fontWeight: 900, color: theme.text.primary, letterSpacing: '-1px' }}>
@@ -291,10 +291,39 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, textTransform: 'uppercase' }}>Filtros:</Typography>
                         <Chip label="Todos" onClick={fetchTodos} sx={{ height: 28, fontWeight: 700, bgcolor: filtroAtivo === null ? theme.action.inactiveFilterBg : "transparent" }} />
-                        {status?.map((value, index) => (
+                        {status?.map((value, index) => value.id != 1 ? (
                             <Box key={index} onClick={() => buscarPorStatus(value.id, index)} sx={{ display: "flex", alignItems: "center", px: 1.5, py: 0.5, borderRadius: "99px", cursor: "pointer", border: "1px solid", borderColor: filtroAtivo === index ? value.corHexadecimal : theme.border.main, bgcolor: filtroAtivo === index ? `${value.corHexadecimal}15` : "transparent" }}>
                                 <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: value.corHexadecimal, mr: 1, boxShadow: `0 0 8px ${value.corHexadecimal}` }} />
                                 <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem',color:theme.text.secondary }}>{value.descricao}</Typography>
+                            </Box>
+                        ):(
+                            <Box key={index} onClick={() => buscarPorStatus(value.id, index)} sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                px: 2,
+                                py: 0.5,
+                                borderRadius: "99px",
+                                cursor: "pointer",
+                                border: "2px solid",
+                                borderColor: filtroAtivo === index ? value.corHexadecimal : "transparent",
+                                bgcolor: filtroAtivo === index ? value.corHexadecimal : "orange",
+                                boxShadow: filtroAtivo === index ? `0 0 12px ${value.corHexadecimal}` : "none",
+                                transition: "all 0.2s ease-in-out"
+                            }}>
+                                <Box sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    bgcolor: filtroAtivo === index ? "#fff" : value.corHexadecimal,
+                                    mr: 1
+                                }} />
+                                <Typography variant="body2" sx={{
+                                    fontWeight: 700,
+                                    fontSize: '0.75rem',
+                                    color: filtroAtivo === index ? "#fff" : theme.text.primary
+                                }}>
+                                    {value.descricao}
+                                </Typography>
                             </Box>
                         ))}
                     </Stack>
@@ -309,7 +338,7 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
 
             <Box sx={{ flex: 1, width: "100%", p: "0 24px 24px 24px", boxSizing: "border-box", overflow: "hidden" }}>
-                <Listagem rows={rows} coluna={coluna} fetchTodos={fetchTodos} newRowRef={newRowRef} handleRowClick={handleRowClick} status={status!} currentTheme={theme} />
+                <Listagem rows={rows} coluna={coluna} fetchTodos={fetchTodos} newRowRef={newRowRef} handleRowClick={handleRowClick} status={status!} currentTheme={theme} mode={mode} />
             </Box>
         </Box>
     );
