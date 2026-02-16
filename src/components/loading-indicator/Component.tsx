@@ -5,7 +5,7 @@ import {
     forwardRef,
     type CSSProperties
 } from "react";
-import { useIsMobile } from "../../hooks/useIsMobile";
+import { useIsMobile } from "@/hooks/useIsMobile";
 export interface LoadingIndicatorRef {
     start: () => void;
     done: () => void;
@@ -15,19 +15,36 @@ export interface LoadingIndicatorRef {
 const LoadingIndicator = forwardRef<LoadingIndicatorRef, {}>((props, ref) => {
     const [visible, setVisible] = useState(false);
     const isMobile = useIsMobile();
-    const {} = props;
+
     useImperativeHandle(ref, () => ({
-        start() {
-            setVisible(true);
-        },
-        done() {
-            setVisible(false);
-        }
+        start() { setVisible(true); },
+        done() { setVisible(false); }
     }));
 
     return (
-        <Box>
-            {visible && <Box sx={styles.background} />}
+        <Box sx={{
+
+            pointerEvents: visible ? "all" : "none",
+            position: "fixed",
+            zIndex: 9997
+        }}>
+
+            <style>
+                {`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}
+            </style>
+
+            <Box sx={{
+                ...styles.background,
+                opacity: visible ? 0.9 : 0,
+                visibility: visible ? "visible" : "hidden",
+                transition: "opacity 0.4s ease, visibility 0.4s ease",
+            }} />
+
             <div
                 style={{
                     ...styles.overlay,
@@ -35,15 +52,19 @@ const LoadingIndicator = forwardRef<LoadingIndicatorRef, {}>((props, ref) => {
                     opacity: visible ? 1 : 0,
                     position: "fixed",
                     top: "35%",
-                    left: isMobile ? "28%" : "45%"
+                    left: isMobile ? "20%" : "45%", // Ajustado para mobile não cortar
+                    pointerEvents: visible ? "all" : "none" // Garante que cliques passem por aqui
                 }}
             >
                 <div style={styles.loaderWrapper}>
-                    <div style={styles.spinner}></div>
+                    <div style={{
+                        ...styles.spinner as any,
+                        animation: "spin 1s linear infinite",
+                    }}></div>
                     <img
                         src="https://www.datagroconferences.com/wp-content/uploads/2021/06/Agrionfertilizantes_site-1.png"
                         alt="logo"
-                        style={styles.image}
+                        style={styles.image as any}
                     />
                 </div>
                 <span
@@ -63,7 +84,6 @@ const LoadingIndicator = forwardRef<LoadingIndicatorRef, {}>((props, ref) => {
         </Box>
     );
 });
-
 
 const styles: Record<string, CSSProperties> = {
     background: {

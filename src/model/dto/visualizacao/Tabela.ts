@@ -1,7 +1,7 @@
 //visualização de pre cadastro
 export interface ViewTabelaPreCadastroDTO {
     nomeMotorista: string;
-    contato: string;
+    telefone: string;
     placa: string;
     cpf: string;
     corVeiculo: string;
@@ -21,7 +21,7 @@ export interface ViewTabelaPreCadastroDTO {
 //visualização de dados cadastrados
 export interface ViewTabelaDTO {
     nomeMotorista: string;
-    contato: string;
+    telefone: string;
     placa: string;
     cpf: string;
     tipo: string;

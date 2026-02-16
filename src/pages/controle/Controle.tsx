@@ -46,6 +46,7 @@ interface PreCadastroItem {
     telefone: string;
     modelo: string;
     marca: string;
+    ordem:number;
     corVeiculo: string;
     produto: string;
     status: string;
@@ -100,9 +101,11 @@ export default function Controle() {
                     identificador: item.identificador,
                     nomeMotorista: item.nomeMotorista,
                     placa: item.placa,
-                    telefone: item.contato || item.telefone,
+                    telefone: item.telefone,
                     modelo: item.modelo,
+                    ordem:item.ordem,
                     marca: item.marca,
+                    corVeiculo:item.corVeiculo,
                     produto: item.produto || 'Granel',
                     status: !item.confirmado ? 'AGUARDANDO' : 'NO PÁTIO',
                     previsaoChegada: item.previsaoChegada,
@@ -499,7 +502,7 @@ export default function Controle() {
                                                     <DetailItem label="Previsão"
                                                                 value={calcularTempo(item.previsaoChegada) || 'N/A'}/></Stack>
                                                 <Stack direction="row" spacing={2}><DetailItem label="ID Ordem"
-                                                                                               value={`#${item.identificador}`}/>
+                                                                                               value={`#${item.ordem}`}/>
                                                     <DetailItem label="Tara prevista"
                                                                 value={item.pesoVazio ? `${item.pesoVazio} kg` : 'Não informado'}/></Stack>
                                             </Stack>

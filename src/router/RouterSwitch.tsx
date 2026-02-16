@@ -23,21 +23,21 @@ const RouterSwitch = () => {
             component:<Login/>
         },
         {
-            path: "/historico",
+            path: "/agrion/historico",
             component:<Historico/>
 
         },
         {
-            path: "/suporte",
+            path: "/agrion/suporte",
             component:<Suporte/>
 
         },
         {
-            path:"/principal",
+            path:"/agrion/principal",
             component:<Principal setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen} />
         },
         {
-            path:"/controle",
+            path:"/agrion/controle",
             component:<Controle/>
         }
 

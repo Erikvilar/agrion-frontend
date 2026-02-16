@@ -73,39 +73,44 @@ export const APP_THEME: Record<ThemeMode, ColorPalette> = {
 
     light: {
         background: {
-            main: "#E8E2D8",    // Slate 100 (Fundo claro, limpo e profissional)
-            paper: "#E8E2D8",   // Branco puro (Cards saltam aos olhos sobre o fundo Slate 100)
-            hover: "#e2e8f0",   // Slate 200 (Hover sutil)
+            main: "#F8FAFC",      // Slate 50 - Fundo principal (muito comum em dashboards)
+            paper: "#FFFFFF",     // Branco puro (cards)
+            hover: "#F1F5F9",     // Slate 100 (hover sutil)
         },
-        // MANTENDO A TABELA ESCURA NO MODO LIGHT (Padrão Dashboard Industrial)
+
         table: {
-            primary: "#15173D",   // Slate 50 (Texto claro na tabela escura)
-            secondary: "#25343F", // Slate 400 (Texto secundário)
-            main: "#E8E2D8",      // Slate 900 (Fundo da tabela - Contraste forte com o bg #f1f5f9)
-            paper: "#E8E2D8",     // Slate 800 (Cabeçalhos/Linhas alternadas)
-            hover: "#F2A65A",     // Slate 700 (Hover nas linhas da tabela)
-        },
-        text: {
-            primary: "#0f172a",   // Slate 900 (Texto escuro para o resto da tela)
+            primary: "#0F172A",   // Slate 900 (texto forte)
             secondary: "#475569", // Slate 600
-            disabled: "#94a3b8",
-            inverse: "#ffffff",
-            highlight: "#2563eb",
+            main: "#FFFFFF",      // Fundo da tabela
+            paper: "#F8FAFC",     // Cabeçalho / linhas alternadas
+            hover: "#E2E8F0",     // Slate 200
         },
+
+        text: {
+            primary: "#0F172A",   // Slate 900
+            secondary: "#64748B", // Slate 500
+            disabled: "#94A3B8",  // Slate 400
+            inverse: "#FFFFFF",
+            highlight: "#2563EB", // Azul padrão moderno
+        },
+
         border: {
-            main: "#e2e8f0",    // Slate 200 (Bordas sutis)
-            focus: "#3b82f6",
-            divider: "#334155", // Divisor escuro para combinar com a tabela
+            main: "#E2E8F0",      // Slate 200
+            focus: "#3B82F6",     // Azul 500
+            divider: "#E2E8F0",
         },
+
         action: {
-            activeFilterBg: "#cbd5e1", // Slate 300 (Um pouco mais visível no fundo claro)
+            activeFilterBg: "#DBEAFE",  // Azul 100
             inactiveFilterBg: "transparent",
         },
+
         scroll: {
-            track: "#f1f5f9",   // Combina com o fundo da página
-            thumb: "#94a3b8",   // Slate 400 (Discreto)
+            track: "#F1F5F9",
+            thumb: "#CBD5E1", // Slate 300
         }
-    },
+    }
+    ,
 
     // Default como uma variação 'Steel' (Mais focado em tons frios)
     default: {

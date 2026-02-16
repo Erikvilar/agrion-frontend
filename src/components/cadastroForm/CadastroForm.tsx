@@ -20,6 +20,7 @@ interface CadastroVeiculoFormProps {
     submitCadastro: (isPreCadastro: boolean) => void;
     clearForm: () => void;
     modoOperacao:boolean;
+
 }
 
 const inputStyle = { bgcolor: "transparent", color: "white" };
@@ -29,14 +30,15 @@ export const CadastroForm = ({
                                  handleCadastro,
                                  submitCadastro,
                                  clearForm,
-                                 modoOperacao
+                                 modoOperacao,
+
 
                              }: CadastroVeiculoFormProps) => {
 
     const [tabValue, setTabValue] = useState(0);
     const [submitErrors, setSubmitErrors] = useState<Record<string, boolean>>({});
     const [isPreCadastro] = useState(modoOperacao);
-
+    console.log(cadastro?.ordem);
     const fieldRefs = useRef<Record<string, any>>({});
 
     const registerRef = (name: string) => (el: any) => {
@@ -83,7 +85,13 @@ export const CadastroForm = ({
             }, 150);
         }
     };
+    const formatToLocalDateTime = (dateString: string) => {
+        const date = new Date(dateString);
 
+        const pad = (n: number) => String(n).padStart(2, "0");
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
     return (
         <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -130,8 +138,9 @@ export const CadastroForm = ({
                     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 2 }}>
                         <Box sx={{ gridColumn: 'span 12' }}>
                             <TextField
+                                sx={{border:"1px solid black"}}
                                 ref={registerRef("nomeMotorista")}
-                                fullWidth size="small" name="nomeMotorista" label="Nome do Motorista"
+                                fullWidth size="small" name="nomeMotorista" placeholder="Nome do Motorista"
                                 error={validateField("nomeMotorista")}
                                 color={isFieldValid("nomeMotorista") ? "success" : "primary"}
                                 value={cadastro?.nomeMotorista?.toLocaleUpperCase() || ''} onChange={handleCadastro}
@@ -139,8 +148,10 @@ export const CadastroForm = ({
                         </Box>
                         <Box sx={{ gridColumn: 'span 6' }}>
                             <TextField
+                                sx={{border:"1px solid black"}}
+
                                 ref={registerRef("cpf")}
-                                fullWidth size="small" name="cpf" label="CPF"
+                                fullWidth size="small" name="cpf" placeholder="CPF"
                                 error={validateField("cpf")}
                                 color={isFieldValid("cpf") ? "success" : "primary"}
                                 value={cadastro?.cpf || ''} onChange={handleCadastro}
@@ -148,14 +159,16 @@ export const CadastroForm = ({
                         </Box>
                         <Box sx={{ gridColumn: 'span 6' }}>
                             <TextField
-                                fullWidth size="small" name="telefone" label="Telefone"
-                                value={cadastro?.telefone || ''} onChange={handleCadastro}
+                                sx={{border:"1px solid black"}}
+                                fullWidth size="small" name="telefone" placeholder="Telefone"
+                                value={cadastro?.telefone  } onChange={handleCadastro}
                             />
                         </Box>
                         <Box sx={{ gridColumn: 'span 4' }}>
                             <TextField
+                                sx={{border:"1px solid black"}}
                                 ref={registerRef("placa")}
-                                fullWidth size="small" name="placa" label="Placa"
+                                fullWidth size="small" name="placa" placeholder="Placa"
                                 error={validateField("placa")}
                                 color={isFieldValid("placa") ? "success" : "primary"}
                                 value={cadastro?.placa || ''} onChange={handleCadastro}
@@ -163,32 +176,37 @@ export const CadastroForm = ({
                         </Box>
                         <Box sx={{ gridColumn: 'span 4' }}>
                             <TextField
-                                fullWidth size="small" name="marca" label="Marca"
+                                sx={{border:"1px solid black"}}
+                                fullWidth size="small" name="marca" placeholder="Marca"
                                 value={cadastro?.marca || ''} onChange={handleCadastro}
                             />
                         </Box>
                         <Box sx={{ gridColumn: 'span 4' }}>
                             <TextField
-                                fullWidth size="small" name="modelo" label="Modelo"
+                                sx={{border:"1px solid black"}}
+                                fullWidth size="small" name="modelo" placeholder="Modelo"
                                 value={cadastro?.modelo || ''} onChange={handleCadastro}
                             />
                         </Box>
                         <Box sx={{ gridColumn: 'span 4' }}>
                             <TextField
-                                fullWidth size="small" name="corVeiculo" label="Cor"
+                                sx={{border:"1px solid black"}}
+                                fullWidth size="small" name="corVeiculo" placeholder="Cor"
                                 value={cadastro?.corVeiculo || ''} onChange={handleCadastro}
                             />
                         </Box>
                         <Box sx={{ gridColumn: 'span 4' }}>
                             <TextField
-                                fullWidth size="small" name="peso" label="Tara (Kg)" type="number"
+                                sx={{border:"1px solid black"}}
+                                fullWidth size="small" name="peso" placeholder="Tara (Kg)" type="number"
                                 value={cadastro?.peso || ''} onChange={handleCadastro}
                             />
                         </Box>
                         <Box sx={{ gridColumn: 'span 12' }}>
                             <TextField
+                                sx={{border:"1px solid black"}}
                                 ref={registerRef("origem")}
-                                fullWidth size="small" name="origem" label="Origem (Cidade-UF)"
+                                fullWidth size="small" name="origem" placeholder="Origem (Cidade-UF)"
                                 error={validateField("origem")}
                                 color={isFieldValid("origem") ? "success" : "primary"}
                                 value={cadastro?.origem || ''} onChange={handleCadastro}
@@ -219,17 +237,23 @@ export const CadastroForm = ({
                                     </Box>
                                 </Box>
                                 <TextField
+
                                     fullWidth size="small" type="datetime-local" name="previsaoChegada"
                                     disabled={cadastro?.confirmado}
                                     sx={{
                                         ...inputStyle,
+                                        border:"1px solid black",
                                         "& .Mui-disabled": { bgcolor: grey[100], color: grey[600], cursor: "not-allowed", WebkitTextFillColor: grey[600] },
                                         "& input::-webkit-calendar-picker-indicator": {
                                             filter: cadastro?.confirmado ? "grayscale(100%) opacity(30%)" : "invert(40%) sepia(90%) saturate(1500%) hue-rotate(10deg) brightness(90%) contrast(100%)",
                                             cursor: cadastro?.confirmado ? "default" : "pointer"
                                         }
                                     }}
-                                    value={cadastro?.previsaoChegada ? new Date(cadastro.previsaoChegada).toISOString().slice(0, 16) : ""}
+                                    value={
+                                        cadastro?.previsaoChegada
+                                            ? formatToLocalDateTime(cadastro.previsaoChegada.toString())
+                                            : ""
+                                    }
                                     onChange={handleCadastro}
                                     InputLabelProps={{ shrink: true }}
                                 />
@@ -238,7 +262,9 @@ export const CadastroForm = ({
 
                         <Box sx={{ gridColumn: 'span 4' }}>
                             <TextField
-                                fullWidth size="small" name="ordem" label="Nº Ordem" type="number"
+                                sx={{border:"1px solid black"}}
+
+                                fullWidth size="small" name="ordem" placeholder="Nº ordem" type="number"
                                 value={cadastro?.ordem || ''} onChange={handleCadastro}
                                 InputProps={{ startAdornment: <InputAdornment position="start"><DescriptionIcon fontSize="small" /></InputAdornment> }}
                             />
@@ -246,17 +272,18 @@ export const CadastroForm = ({
 
                         <Box sx={{ gridColumn: 'span 8' }}>
                             <TextField
+                                sx={{border:"1px solid black"}}
                                 ref={registerRef("produto")}
-                                fullWidth size="small" name="produto" label="Nome do Produto"
+                                fullWidth size="small" name="produto" placeholder="Nome do Produto"
                                 error={validateField("produto")}
                                 color={isFieldValid("produto") ? "success" : "primary"}
                                 value={cadastro?.produto || ''} onChange={handleCadastro}
                             />
                         </Box>
                         <Box sx={{ gridColumn: 'span 6' }}>
-                            <FormControl fullWidth size="small" error={validateField("tipo")} ref={registerRef("tipo")}>
+                            <FormControl fullWidth size="small" error={validateField("tipo")} ref={registerRef("tipo")} >
                                 <Typography fontSize="0.75rem" fontWeight={600} color={isFieldValid("tipo") ? green[700] : grey[600]} sx={{ mb: 0.5 }}>Tipo de Produto</Typography>
-                                <Select name="tipo" value={cadastro?.tipo || ""} onChange={handleCadastro} sx={{ color: isFieldValid("tipo") ? green[700] : 'inherit' }}>
+                                <Select name="tipo" value={cadastro?.tipo || ""} onChange={handleCadastro} sx={{ color: isFieldValid("tipo") ? green[700] : 'inherit',border:"1px solid black" }}>
                                     <MenuItem value="GRANEL">GRANEL</MenuItem>
                                     <MenuItem value="BAGS">BAGS</MenuItem>
                                     <MenuItem value="SACARIA">SACARIA</MenuItem>
@@ -266,7 +293,7 @@ export const CadastroForm = ({
                         <Box sx={{ gridColumn: 'span 6' }}>
                             <FormControl fullWidth size="small" error={validateField("operacao")} ref={registerRef("operacao")}>
                                 <Typography fontSize="0.75rem" fontWeight={600} color={isFieldValid("operacao") ? green[700] : grey[600]} sx={{ mb: 0.5 }}>Tipo de Operação</Typography>
-                                <Select name="operacao" value={cadastro?.operacao || ""} onChange={handleCadastro} sx={{ color: isFieldValid("operacao") ? green[700] : 'inherit' }}>
+                                <Select name="operacao" value={cadastro?.operacao || ""} onChange={handleCadastro} sx={{ color: isFieldValid("operacao") ? green[700] : 'inherit',border:"1px solid black" }}>
                                     <MenuItem value="CARREGAMENTO">CARREGAMENTO</MenuItem>
                                     <MenuItem value="DESCARREGAMENTO">DESCARREGAMENTO</MenuItem>
                                 </Select>

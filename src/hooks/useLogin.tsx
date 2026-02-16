@@ -65,7 +65,7 @@ export const useLogin = (
 
                 initializeWebSocket(roles, token);
 
-                navigate(isMobile ? "/controle" : "/principal");
+                navigate(isMobile ? "/agrion/controle" : "/agrion/principal");
             } else {
                 showNotification(ActionType.Warning, "Falha no Login", message || "Credenciais inválidas", () => {});
             }

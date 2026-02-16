@@ -94,7 +94,6 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
         padding: "16px",
         borderBottom: `1px solid ${theme.border.divider}`,
     };
-
     const ActionButton = () => (
         <Button
             onClick={(e) => {
@@ -130,15 +129,9 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
         </Button>
     );
 
+const definicaoLinhasTabela = (row:any)=>{
     return (
-        <TableRow
-            hover
-            onClick={() => handleRowClick(row as any)}
-            sx={{
-                cursor: 'pointer', transition: "background 0.1s",
-                "&:hover": { backgroundColor: `${theme.table.hover} !important` }
-            }}
-        >
+        <>
             <TableCell sx={cellStyle} align="left">
                 <Box display="flex" flexDirection="column">
                     <Typography variant="body2" fontWeight={700} color={theme.table.primary}>
@@ -149,15 +142,12 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
                     </Typography>
                 </Box>
             </TableCell>
-
-            <TableCell align="center"  sx={cellStyle}>{row.contato || "-"}</TableCell>
-            <TableCell align="center"  sx={cellStyle}>{row.placa || "-"}</TableCell>
-            <TableCell align="center"  sx={cellStyle}>{row.cpf || "-"}</TableCell>
-            <TableCell align="center"  sx={cellStyle}>{row.tipo || "-"}</TableCell>
-            <TableCell align="center"  sx={cellStyle}>{row.produto || "-"}</TableCell>
-            <TableCell align="center"  sx={cellStyle}>{row.ordem ? row.ordem : "0"}</TableCell>
-
-
+            <TableCell align="center"  sx={cellStyle}>{row.telefone || "-"}</TableCell>
+    <TableCell align="center"  sx={cellStyle}>{row.placa || "-"}</TableCell>
+    <TableCell align="center"  sx={cellStyle}>{row.cpf || "-"}</TableCell>
+    <TableCell align="center"  sx={cellStyle}>{row.tipo || "-"}</TableCell>
+    <TableCell align="center"  sx={cellStyle}>{row.produto || "-"}</TableCell>
+    <TableCell align="center"  sx={cellStyle}>{row.ordem ? row.ordem : "0"}</TableCell>
             <TableCell align="center" sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : "0"} Kg</TableCell>
 
 
@@ -165,6 +155,24 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
 
             <TableCell align="center" sx={cellStyle}>{row.operacao || "-"}</TableCell>
             <TableCell align="right" sx={cellStyle}><ActionButton /></TableCell>
+        </>
+    )
+}
+
+    return (
+        <TableRow
+            hover
+            onClick={() => handleRowClick(row as any)}
+            sx={{
+                cursor: 'pointer', transition: "background 0.1s",
+                "&:hover": { backgroundColor: `${theme.table.hover} !important` }
+            }}
+        >
+
+
+            {definicaoLinhasTabela(row)}
+
+
         </TableRow>
     );
 });

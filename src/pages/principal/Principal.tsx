@@ -72,7 +72,7 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     const [status, setStatus] = useState<StatusDTO[]>();
     const [filtroAtivo, setFiltroAtivo] = useState<number | null>(null);
     const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
-    const [modoOperacao, setModoOperacao] = useState<boolean>(false);
+    const [modoOperacao, setModoOperacao] = useState<boolean>(true);
 
     const getPreCadastroVazio = (): RegistroCadastroDTO => ({
         identificador: 0, nomeMotorista: "", telefone: "", placa: "", cpf: "", tipo: "",
@@ -94,7 +94,6 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
         }
         setPreCadastro((prev) => ({ ...prev, [name]: value }));
     }, []);
-
 
     useEffect(() => {
         const onMessage = (data: WSMessage) => {
@@ -124,7 +123,7 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const submitPreCadastro = async () => {
         const {cpf,nomeMotorista,placa,modelo,marca,origem} = preCadastro;
-        let messageDefault = `Novo agendamento para ${nomeMotorista} cujo CPF ${cpf}.\n Veiculo: ${marca}-${modelo}-${placa}, com origem de ${origem}} `
+        let messageDefault = `Novo agendamento para ${nomeMotorista} cujo CPF ${cpf}.\n Veiculo: ${marca}-${modelo}-${placa}, com origem de ${origem} `
         console.log("submit chamado")
         if (!preCadastro) return;
         try {
@@ -222,27 +221,93 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
             <LoadingIndicator ref={loaderRef} />
 
 
-            <OffCanvasDrawer ref={offcanvasRef} title="Registro de Carga" position="left" width={700} currentTheme={theme}>
+            <OffCanvasDrawer ref={offcanvasRef} title={preCadastro.ordem ? "Detalhe ordem serviço "+preCadastro.ordem:"Registro carga"} position="left" width={700} currentTheme={theme}>
                 <CadastroForm cadastro={preCadastro} handleCadastro={handlePreCadastro} modoOperacao={modoOperacao} status={status!} submitCadastro={submitPreCadastro} clearForm={handleClearForm} />
             </OffCanvasDrawer>
 
 
-            <Drawer anchor="right" open={configOpen} onClose={() => setConfigOpen(false)} PaperProps={{ sx: { width: isMobile ? '100%' : 400, backgroundColor: theme.background.paper, borderLeft: `1px solid ${theme.border.main}` } }}>
-                <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-                        <Typography variant="h6" fontWeight={800} color={theme.text.primary}>Notificações</Typography>
-                        <IconButton onClick={() => setConfigOpen(false)}><CloseIcon /></IconButton>
+            <Drawer
+                anchor="right"
+                open={configOpen}
+                onClose={() => setConfigOpen(false)}
+                PaperProps={{
+                    sx: {
+                        width: isMobile ? '100%' : 400,
+                        backgroundColor: theme.background.paper,
+                        borderLeft: `1px solid ${theme.border.main}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                    },
+                }}
+            >
+                <Box
+                    sx={{
+                        p: 3,
+                        borderBottom: `1px solid ${theme.border.divider}`,
+                        flexShrink: 0,
+                    }}
+                >
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h6" fontWeight={800} color={theme.text.primary}>
+                            Notificações
+                        </Typography>
+                        <IconButton onClick={() => setConfigOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
                     </Stack>
-                    <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-                        {notifications.length === 0 ? (
-                            <Stack alignItems="center" sx={{ mt: 10, opacity: 0.3 }}><MessageIcon sx={{ fontSize: 48 }} /><Typography>Nenhuma mensagem</Typography></Stack>
-                        ) : (
-                            <Stack spacing={2}>{notifications.map((n, i) => (<Box key={i} sx={{ p: 2,  bgcolor:"orange", borderRadius: 2,color:"black", border: `1px solid ${theme.border.divider}` }}><Typography variant="body2">{n.message}</Typography></Box>))}</Stack>
-                        )}
-                    </Box>
-                    <Divider sx={{ my: 3 }} />
-                    <Button fullWidth variant="outlined" startIcon={mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />} onClick={toggleTheme}>Modo {mode === 'dark' ? 'Claro' : 'Escuro'}</Button>
                 </Box>
+
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        overflowY: 'auto',
+                        px: 3,
+                        py: 2,
+
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'transparent transparent',
+
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            background: 'transparent',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: 'rgba(0,0,0,0.2)',
+                            borderRadius: 8,
+                        },
+                        '&::-webkit-scrollbar-thumb:hover': {
+                            backgroundColor: 'rgba(0,0,0,0.35)',
+                        },
+                    }}
+                >
+                    {notifications.length === 0 ? (
+                        <Stack alignItems="center" sx={{ mt: 10, opacity: 0.3 }}>
+                            <MessageIcon sx={{ fontSize: 48 }} />
+                            <Typography>Nenhuma mensagem</Typography>
+                        </Stack>
+                    ) : (
+                        <Stack spacing={2}>
+                            {notifications.map((n, i) => (
+                                <Box
+                                    key={i}
+                                    sx={{
+                                        p: 2,
+                                        bgcolor: 'orange',
+                                        borderRadius: 2,
+                                        color: 'black',
+                                        border: `1px solid ${theme.border.divider}`,
+                                    }}
+                                >
+                                    <Typography variant="body2">{n.message}</Typography>
+                                </Box>
+                            ))}
+                        </Stack>
+                    )}
+                </Box>
+
+                <Divider />
             </Drawer>
 
 
@@ -268,9 +333,14 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                         ))}
                         <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                         <Badge badgeContent={notifications.length} color="error">
+
                             <IconButton onClick={() => setConfigOpen(true)} sx={{ border: `1px solid ${theme.border.main}`, color: theme.text.primary }}><NotificationsIcon /></IconButton>
                         </Badge>
+
+
                         <IconButton onClick={() => setConfigOpen(true)} sx={{ border: `1px solid ${theme.border.main}`, color: theme.text.primary }}><SettingsIcon /></IconButton>
+                        <IconButton onClick={toggleTheme}>{mode === 'dark' ? <LightModeIcon  color="primary"/> : <DarkModeIcon color="primary" />}</IconButton>
+
                     </Stack>
                 </Stack>
             </Box>
@@ -290,7 +360,7 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                 <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 3, mb: 1 }} flexWrap="wrap" gap={2}>
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, textTransform: 'uppercase' }}>Filtros:</Typography>
-                        <Chip label="Todos" onClick={fetchTodos} sx={{ height: 28, fontWeight: 700, bgcolor: filtroAtivo === null ? theme.action.inactiveFilterBg : "transparent" }} />
+                        <Chip  onClick={fetchTodos} sx={{ height: 28, fontWeight: 700, bgcolor: filtroAtivo === null ? theme.action.inactiveFilterBg : "transparent" }} />
                         {status?.map((value, index) => value.id != 1 ? (
                             <Box key={index} onClick={() => buscarPorStatus(value.id, index)} sx={{ display: "flex", alignItems: "center", px: 1.5, py: 0.5, borderRadius: "99px", cursor: "pointer", border: "1px solid", borderColor: filtroAtivo === index ? value.corHexadecimal : theme.border.main, bgcolor: filtroAtivo === index ? `${value.corHexadecimal}15` : "transparent" }}>
                                 <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: value.corHexadecimal, mr: 1, boxShadow: `0 0 8px ${value.corHexadecimal}` }} />
