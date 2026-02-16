@@ -12,7 +12,7 @@ export interface LoadingIndicatorRef {
 }
 
 
-const LoadingIndicator = forwardRef<LoadingIndicatorRef, {}>((props, ref) => {
+const LoadingIndicator = forwardRef<LoadingIndicatorRef, {}>((_props, ref) => {
     const [visible, setVisible] = useState(false);
     const isMobile = useIsMobile();
 
