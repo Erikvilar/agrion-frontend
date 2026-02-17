@@ -10,7 +10,7 @@ const interceptor = axios.create({
 
 const handleLogout = () => {
     localStorage.clear();
-    window.location.href = '/';
+    window.location.href = '/agrion/';
 };
 
 interceptor.interceptors.request.use(
