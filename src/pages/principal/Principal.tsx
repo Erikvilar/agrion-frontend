@@ -48,6 +48,7 @@ export type CadastroRow = ViewTabelaPreCadastroDTO | ViewTabelaDTO;
 interface ListaEsperaProps { isModalOpen: boolean; setIsModalOpen: (open: boolean) => void; }
 
 export const colunaPreCadastro = ["Motorista", "Contato", "Placa", "CPF", "Tipo", "Produto", "Nº Ordem", "Peso (Kg)", "Prev. Chegada", "Operação", "Status"]
+
 export const colunaCadastro = ["Motorista", "Telefone", "Placa", "CPF", "Tipo produto", "Produto", "Peso inicial", "Peso final", "Data chegada", "Operação", "status"]
 
 const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
@@ -74,11 +75,30 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
     const [modoOperacao, setModoOperacao] = useState<boolean>(true);
 
-    const getPreCadastroVazio = (): RegistroCadastroDTO => ({
-        identificador: 0, nomeMotorista: "", telefone: "", placa: "", cpf: "", tipo: "",
-        produto: "", origem: "", peso: 0, corVeiculo: "", modelo: "", marca: "",
-        prioridade: false, ordem: 0, previsaoChegada: undefined, operacao: "", confirmado: false
-    });
+    const getPreCadastroVazio = (): RegistroCadastroDTO => {
+
+        setModoOperacao(true);
+
+        return {
+            identificador: 0,
+            nomeMotorista: "",
+            telefone: "",
+            placa: "",
+            cpf: "",
+            tipo: "",
+            produto: "",
+            origem: "",
+            peso: 0,
+            corVeiculo: "",
+            modelo: "",
+            marca: "",
+            prioridade: false,
+            ordem: 0,
+            previsaoChegada: undefined,
+            operacao: "",
+            confirmado: false
+        };
+    };
 
     const [preCadastro, setPreCadastro] = useState<RegistroCadastroDTO>(getPreCadastroVazio);
 
@@ -122,14 +142,14 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
     }, [theme]);
 
     const submitPreCadastro = async () => {
-        const {cpf,nomeMotorista,placa,modelo,marca,origem} = preCadastro;
-        let messageDefault = `Novo agendamento para ${nomeMotorista} cujo CPF ${cpf}.\n Veiculo: ${marca}-${modelo}-${placa}, com origem de ${origem} `
-        console.log("submit chamado")
+
+
+
         if (!preCadastro) return;
         try {
             loaderRef.current?.start();
-            await ApiServices.cadastrar(preCadastro);
-            await ApiServices.notifyGroup("ROLE_LOGISTICA", messageDefault);
+            const response:ViewTabelaPreCadastroDTO  =  await ApiServices.cadastrar(preCadastro);
+            await ApiServices.notifyGroup(response);
             await buscarTodosPreCadastro();
             offcanvasRef.current?.close();
         } catch (err) { console.error(err); } finally { loaderRef.current?.done(); }

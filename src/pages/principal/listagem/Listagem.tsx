@@ -18,6 +18,7 @@ import type StatusDTO from '../../../model/dto/StatusDTO.ts';
 import {type ColorPalette, ThemeMode} from "@/styles/themeConstants";
 import {CadastroRow} from "@/pages/principal/Principal";
 import RegistroCadastroDTO from "@/model/dto/registro/RegistroCadastroDTO";
+import ApiServices from "@/services/api-service.js";
 
 
 
@@ -83,7 +84,7 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
 
     const pesoExibicao = 'peso' in row ? row.peso : (row as any).peso;
 
-    const origemCarga = 'origem' in row ? row.origem : "Interna/Própria";
+    const origemCarga = row.origem
 
     const podeMudarStatus = 'status' in row;
 
@@ -147,8 +148,8 @@ const definicaoLinhasTabela = (row:any)=>{
     <TableCell align="center"  sx={cellStyle}>{row.cpf || "-"}</TableCell>
     <TableCell align="center"  sx={cellStyle}>{row.tipo || "-"}</TableCell>
     <TableCell align="center"  sx={cellStyle}>{row.produto || "-"}</TableCell>
-    <TableCell align="center"  sx={cellStyle}>{row.ordem ? row.ordem : "0"}</TableCell>
-            <TableCell align="center" sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : "0"} Kg</TableCell>
+    <TableCell align="center"  sx={cellStyle}>{row.pesoInicial || row.ordem}</TableCell>
+            <TableCell align="center" sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : row.pesoFinal} Kg</TableCell>
 
 
             <TableCell align="center"  sx={cellStyle}>{formatarDataHora("previsaoChegada" in row ? row.previsaoChegada : 'dataCriacao' in row ? row.dataCriacao : "")}</TableCell>
@@ -158,7 +159,7 @@ const definicaoLinhasTabela = (row:any)=>{
         </>
     )
 }
-
+    console.log(row)
     return (
         <TableRow
             hover
@@ -185,18 +186,35 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
 
     const handleMudarStatus = useCallback(async (row: CadastroRow) => {
 
-        const identificador = row.cpf;
-
-        if (!identificador) {
-            showNotification("error", "Erro", "Identificador (CPF) não encontrado.");
+        const idVeiculo = row.identificador
+    console.log("ID MOVIDO",idVeiculo)
+        if (!idVeiculo) {
+            showNotification("error", "Erro", "Identificador do veículo não encontrado.");
             return;
         }
 
 
-        showNotification("info", "Confirmar Pré-Cadastro?", `Deseja confirmar a chegada de ${row.nomeMotorista}?`, async () => {
+        showNotification(
+            "info",
+            "Mover Veículo",
+            `Deseja alterar o status do veículo de ${row.nomeMotorista} (Placa: ${row.placa})?`,
+            async () => {
 
-            console.log("Ação disparada para:", identificador);
-        });
+
+                const response = await ApiServices.mudarStatus(idVeiculo);
+
+
+                if (response.success) {
+                    showNotification("success", "Sucesso", "Status do veículo atualizado com sucesso!");
+
+
+                    if (fetchTodos) fetchTodos();
+
+                } else {
+                    showNotification("error", "Erro ao mover veículo", response.message || "Ocorreu um erro no servidor.");
+                }
+            }
+        );
 
     }, [fetchTodos, showNotification]);
 

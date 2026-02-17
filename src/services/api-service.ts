@@ -2,6 +2,7 @@ import  UserDTO from "@/model/dto/UserDTO";
 import interceptor from "../api/interceptor";
 import {ConfirmarEntradaDTO} from "@/model/dto/registro/ResponsesDTO";
 import RegistroCadastroDTO from "@/model/dto/registro/RegistroCadastroDTO";
+import {ViewTabelaPreCadastroDTO} from "@/model/dto/visualizacao/Tabela";
 
 
 const ApiServices = {
@@ -166,7 +167,7 @@ const ApiServices = {
   },
   async mudarStatus(id:number){
     try {
-      const response = await interceptor.post("cadastro/mudarStatus",{id});
+      const response = await interceptor.post(`cadastro/mudarStatus/${id}`);
       return {
         success: true,
         status: response.status,
@@ -190,9 +191,10 @@ const ApiServices = {
       };
     }
   },
-  async atualizarPeso(id:number | undefined, pesoCarregado:number){
+  async atualizarPeso(identificador:number | undefined, novoPeso:number){
     try {
-      const response = await interceptor.post("cadastro/atualizarPeso",{id,pesoCarregado});
+
+      const response = await interceptor.post("preCadastro/atualizarPeso",{identificador,novoPeso});
       return {
         success: true,
         status: response.status,
@@ -216,6 +218,7 @@ const ApiServices = {
       };
     }
   },
+
   async historico(){
     try {
       const response = await interceptor.get("cadastro/historico");
@@ -242,7 +245,8 @@ const ApiServices = {
       };
     }
   },
-async buscarTodosStatus(){
+
+  async buscarTodosStatus(){
   try {
       const response = await interceptor.get("status");
       return {
@@ -275,7 +279,7 @@ async buscarTodosStatus(){
 
   },
 
-async confirmarEntrada(confirmarEntrada:ConfirmarEntradaDTO){
+  async confirmarEntrada(confirmarEntrada:ConfirmarEntradaDTO){
   try {
       const response = await interceptor.post("preCadastro/confirmarEntrada",confirmarEntrada);
       return {
@@ -302,7 +306,7 @@ async confirmarEntrada(confirmarEntrada:ConfirmarEntradaDTO){
     }
   },
 
-async notifyUser(username: string, message: string) {
+  async notifyUser(username: string, message: string) {
     const token = localStorage.getItem("token");
 
     try {
@@ -325,17 +329,13 @@ async notifyUser(username: string, message: string) {
     }
   },
 
-async notifyGroup(role: string, message: string) {
+  async notifyGroup( object:ViewTabelaPreCadastroDTO) {
     const token = localStorage.getItem("token");
 
     try {
       const response = await interceptor.post(
-          `/api/notificar/grupo`,
-          {
-            role: role,
-            message: message,
-            timestamp: new Date().toISOString()
-          },
+          `/api/notificar/grupo`,object,
+
           {
             headers: {
               'Content-Type': 'application/json',

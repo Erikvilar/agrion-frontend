@@ -21,10 +21,9 @@ function App() {
     };
   }, [showNotification]);
 
-
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const roles = ["ROLE_LOGISTICA","ROLE_PORTARIA","ROLE_GERENCIAL"];
+    const roles = ["ROLE_LOGISTICA","ROLE_PORTARIA","ROLE_GERENCIAL","ROLE_ADMIN"];
 
     if (token) {
       initializeWebSocket(roles, token);

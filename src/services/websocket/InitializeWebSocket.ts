@@ -7,7 +7,6 @@ let client: Client | null = null;
 export const initializeWebSocket = (roles: string[] = [], token: string): void => {
     if (!token) return;
     if (client?.active) {
-        console.log("WebSocket já está ativo. Ignorando nova tentativa.");
         return;
     }
 
@@ -31,7 +30,7 @@ export const initializeWebSocket = (roles: string[] = [], token: string): void =
         debug: (str) => {
             if (process.env.NODE_ENV === 'development' || 'local') {
                 if (str.includes("Web Socket Opened") || str.includes("DISCONNECT")) {
-                    console.log("WS Status:", str);
+
                 }
             }
         },
@@ -43,22 +42,14 @@ export const initializeWebSocket = (roles: string[] = [], token: string): void =
             processMessage(msg);
         });
 
+        roles.forEach((role) => {
 
-        if (roles.includes("ROLE_LOGISTICA")) {
-            client?.subscribe(`/topic/role/ROLE_LOGISTICA`, (msg: IMessage) => {
-                processMessage(msg);
-            });
-        }
-        if (roles.includes("ROLE_PORTARIA")) {
-            client?.subscribe(`/topic/role/ROLE_PORTARIA`, (msg: IMessage) => {
-                processMessage(msg);
-            });
-        }
-        if (roles.includes("ROLE_GERENCIAL")) {
-            client?.subscribe(`/topic/role/ROLE_GERENCIAL`, (msg: IMessage) => {
-                processMessage(msg);
-            });
-        }
+            if (role.startsWith("ROLE_")) {
+                client?.subscribe(`/topic/role/${role}`, (msg: IMessage) => {
+                    processMessage(msg);
+                });
+            }
+        });
     };
 
     const processMessage = (msg: IMessage) => {
