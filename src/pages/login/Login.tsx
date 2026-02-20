@@ -25,6 +25,8 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import { APP_THEME } from "@/styles/themeConstants";
 
 import {useLogin} from "@/hooks/useLogin";
+// @ts-ignore
+import packageJson from '../../../package.json';
 
 const BG_IMAGE_URL = "https://assets.datagro.com/wp-content/uploads/2020/06/Industria_cana.jpg";
 
@@ -134,7 +136,7 @@ export const Login = () => {
                     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 3 }}>
                         <TextField
                             fullWidth
-                            placeholder="Usuário"
+                            placeholder="usuário"
                             name="login"
                             value={login}
                             onChange={handleLoginChange}
@@ -172,7 +174,7 @@ export const Login = () => {
 
                         <TextField
                             fullWidth
-                            placeholder="Senha"
+                            placeholder="senha"
                             name="password"
                             type={showPassword ? 'text' : 'password'}
                             value={password}
@@ -250,9 +252,12 @@ export const Login = () => {
                         </Button>
                     </Box>
 
-                    {/* FOOTER */}
-                    <Box sx={{ mt: 6 }}>
-                        <Typography variant="caption" sx={{ color: "white", fontWeight: 500 }} align="center" display="block">
+
+                    <Box sx={{ mt: 6,height:50 }}>
+                        <Typography variant="subtitle2" sx={{ color: "white", fontWeight: 500,fontSize:14 }} align="center" display="block">
+                            Versão <span style={{fontWeight:300}}>{packageJson.version}</span>
+                        </Typography>
+                        <Typography variant="subtitle2" sx={{ color: "white", fontWeight: 500,fontSize:14 }} align="center" display="block">
                             © {new Date().getFullYear()} Agrion. Sistema de Controle.
                         </Typography>
                     </Box>

@@ -1,14 +1,14 @@
-
 import RouterSwitch from "./router/RouterSwitch";
 import './index.css';
-import {useNotification} from "@/hooks/useNotification";
-import {ActionType} from "@/components/modal-help/ModalHelper";
-import {useEffect} from "react";
-import {disconnectWebSocket, initializeWebSocket} from "@/services/websocket/InitializeWebSocket";
+import { useNotification } from "@/hooks/useNotification";
+import { ActionType } from "@/components/modal-help/ModalHelper";
+import { useEffect } from "react";
+import { disconnectWebSocket, initializeWebSocket } from "@/services/websocket/InitializeWebSocket";
+
 
 
 function App() {
-  const {NotificationModal,showNotification} = useNotification();
+  const { NotificationModal, showNotification } = useNotification();
 
   useEffect(() => {
     const handleGlobalError = (event: any) => {
@@ -35,10 +35,13 @@ function App() {
   }, []);
 
   return (
-<div >
-  {NotificationModal}
-    <RouterSwitch />
-</div>
+
+        <div>
+          {NotificationModal}
+          <RouterSwitch />
+        </div>
+
   )
 }
-export default App
+
+export default App;

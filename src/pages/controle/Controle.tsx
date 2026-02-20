@@ -97,6 +97,7 @@ export default function Controle() {
                     return {
                         identificador: item.identificador,
                         nomeMotorista: item.nomeMotorista,
+                        cpf:item.cpf,
                         placa: item.placa,
                         telefone: item.telefone,
                         modelo: item.modelo,
@@ -438,7 +439,7 @@ export default function Controle() {
                                             <Stack spacing={2} sx={{ mb: 2 }}>
                                                 <Stack direction="row" spacing={2}>
                                                     <DetailItem label="Motorista" value={item.nomeMotorista} />
-                                                    <DetailItem label="Placa" value={item.placa} />
+                                                    <DetailItem label="Placa" value={item.cpf} />
                                                 </Stack>
                                                 <Stack direction="row" spacing={2}>
                                                     <DetailItem label="Modelo" value={item.modelo} />

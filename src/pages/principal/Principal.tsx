@@ -15,8 +15,6 @@ import {
 import {
     Box,
     Button,
-    Chip,
-    CircularProgress,
     IconButton,
     InputAdornment,
     Stack,
@@ -45,18 +43,19 @@ import {toast} from "react-hot-toast";
 
 
 export type CadastroRow = ViewTabelaPreCadastroDTO | ViewTabelaDTO;
-interface ListaEsperaProps { isModalOpen: boolean; setIsModalOpen: (open: boolean) => void; }
+
 
 export const colunaPreCadastro = ["Motorista", "Contato", "Placa", "CPF", "Tipo", "Produto", "Nº Ordem", "Peso (Kg)", "Prev. Chegada", "Operação", "Status"]
 
 export const colunaCadastro = ["Motorista", "Telefone", "Placa", "CPF", "Tipo produto", "Produto", "Peso inicial", "Peso final", "Data chegada", "Operação", "status"]
 
-const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
+const Principal = () => {
 
     const [mode, setMode] = useState<ThemeMode>('dark');
     const theme = APP_THEME[mode];
     const isMobile = useIsMobile();
     const [configOpen, setConfigOpen] = useState(false);
+
     const [notifications,setNotifications] = useState<any[]>([]);
 
 
@@ -68,10 +67,16 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const [busca, setBusca] = useState("");
     const [rows, setRows] = useState<CadastroRow[]>([]);
-    const [isRefreshing, setIsRefreshing] = useState(false);
     const [coluna, setColuna] = useState(colunaCadastro);
     const [status, setStatus] = useState<StatusDTO[]>();
-    const [filtroAtivo, setFiltroAtivo] = useState<number | null>(null);
+
+    const [filtroAtivo, setFiltroAtivo] = useState<number | null>(() => {
+        const filtroSalvo = localStorage.getItem('agrion_filtroAtivo');
+
+        return filtroSalvo !== null ? JSON.parse(filtroSalvo) : 1;
+    });
+
+
     const [ordem, setOrdem] = useState<'asc' | 'desc'>('desc');
     const [modoOperacao, setModoOperacao] = useState<boolean>(true);
 
@@ -185,12 +190,17 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
     const buscarTodosStatus = async () => {
         const { data, success } = await ApiServices.buscarTodosStatus();
-        if (success) setStatus(data);
+        if (success && data && data.length > 0) {
+            setStatus(data.slice(1));
+        } else if (success) {
+
+            setStatus(data);
+        }
     };
 
     const buscarTodosPreCadastro = async () => {
         try {
-            setIsRefreshing(true);
+            loaderRef.current?.start();
             const { data, success } = await ApiServices.buscarTodosPreCadastro();
             if (success && data) {
                 const sorted = data.sort((a: any, b: any) => {
@@ -201,13 +211,30 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                 setRows(sorted);
                 setOrdem('desc');
             }
-        } finally { setIsRefreshing(false); }
+        } finally { loaderRef.current?.done(); }
     };
 
-    const buscarPorStatus = useCallback(async (codigo: number, indexStatus: number) => {
+    const buscarTodasOrdens = async () => {
         try {
             loaderRef.current?.start();
-            setFiltroAtivo(indexStatus);
+            setFiltroAtivo(null)
+            const { data, success } = await ApiServices.buscarTodasOrdens();
+            if (success && data) {
+                const sorted = data.sort((a: any, b: any) => {
+                    const dA = a.previsaoChegada ? new Date(a.previsaoChegada).getTime() : 0;
+                    const dB = b.previsaoChegada ? new Date(b.previsaoChegada).getTime() : 0;
+                    return dB - dA;
+                });
+                setRows(sorted);
+                setOrdem('desc');
+            }
+        }finally { loaderRef.current?.done(); }
+    };
+
+    const buscarPorStatus = useCallback(async (codigo: number) => {
+        try {
+            loaderRef.current?.start();
+            setFiltroAtivo(codigo);
             if (codigo === 1) {
                 setColuna(colunaPreCadastro);
                 await buscarTodosPreCadastro();
@@ -219,20 +246,35 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
         } finally { loaderRef.current?.done(); }
     }, []);
 
-    const fetchTodos = () => {
-        setFiltroAtivo(null);
+    const buscarPreCadastros = () => {
         buscarTodosPreCadastro();
     };
 
+    const buscarOrdens = async() =>{
+        buscarTodasOrdens()
+    }
+
+    useEffect(() => {
+        if (filtroAtivo !== null) {
+            localStorage.setItem('agrion_filtroAtivo', JSON.stringify(filtroAtivo));
+        } else {
+
+            localStorage.removeItem('agrion_filtroAtivo');
+        }
+    }, [filtroAtivo]);
+
     useEffect(() => {
         buscarTodosStatus();
-        buscarPorStatus(3, 2);
-    }, [setIsModalOpen, isModalOpen]);
+        buscarTodosStatus();
+        if (filtroAtivo) {
+            buscarPorStatus(filtroAtivo);
+        }
+    }, []);
 
     const buttonActions = [
-        { id: "1", title: "Atualizar", background: "#3b82f6", hover: "#2563eb", acao: buscarTodosPreCadastro, icon: isRefreshing ? <CircularProgress size={20} color="inherit" /> : <CachedIcon /> },
+        { id: "1", title: "Atualizar", background: "#3b82f6", hover: "#2563eb", acao: ()=>  buscarTodasOrdens(), icon:  <CachedIcon /> },
         { id: "2", title: "Cadastrar", background: "#10b981", hover: "#059669", acao: () => { handleClearForm(); offcanvasRef.current?.open(); }, icon: <AddCircleIcon /> },
-        { id: "3", title: "Limpar", background: "#F16D34", hover: "#DE802B", acao: fetchTodos, icon: <CachedIcon /> },
+        { id: "3", title: "Limpar", background: "#F16D34", hover: "#DE802B", acao: buscarPreCadastros, icon: <CachedIcon /> },
         { id: "4", title: "Ajuda", background: mode === 'dark' ? "#374151" : "#D1D5DB", hover: mode === 'dark' ? "#4b5563" : "#9CA3AF", acao: () => { }, icon: <HelpOutlineIcon /> }
     ];
 
@@ -346,7 +388,7 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
                     </Stack>
 
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                        {!isMobile && buttonActions.map((btn) => (
+                        {buttonActions.map((btn) => (
                             <Button key={btn.id} variant="contained" startIcon={btn.icon} onClick={btn.acao} sx={{ bgcolor: btn.background, borderRadius: '10px', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: btn.hover } }}>
                                 {btn.title}
                             </Button>
@@ -367,51 +409,92 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
 
             <Box sx={{ p: "24px 24px 0 24px", flexShrink: 0 }}>
+                {/* BARRA DE PESQUISA */}
                 <TextField
                     fullWidth
                     placeholder="Pesquisar por motorista, placa, CPF ou número da ordem..."
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") buscarPorDescricao(); }}
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: theme.background.paper,color:theme.text.secondary } }}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: theme.background.paper, color: theme.text.secondary } }}
                     InputProps={{ startAdornment: <InputAdornment position="start"><Search sx={{ color: theme.text.disabled }} /></InputAdornment> }}
                 />
 
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 3, mb: 1 }} flexWrap="wrap" gap={2}>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, textTransform: 'uppercase' }}>Filtros:</Typography>
-                        <Chip  onClick={fetchTodos} sx={{ height: 28, fontWeight: 700, bgcolor: filtroAtivo === null ? theme.action.inactiveFilterBg : "transparent" }} />
-                        {status?.map((value, index) => value.id != 1 ? (
-                            <Box key={index} onClick={() => buscarPorStatus(value.id, index)} sx={{ display: "flex", alignItems: "center", px: 1.5, py: 0.5, borderRadius: "99px", cursor: "pointer", border: "1px solid", borderColor: filtroAtivo === index ? value.corHexadecimal : theme.border.main, bgcolor: filtroAtivo === index ? `${value.corHexadecimal}15` : "transparent" }}>
+                {/* --- STACK DE SESSÕES (NÍVEL MACRO) --- */}
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 3, mb: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, textTransform: 'uppercase' }}>
+                        Sessão:
+                    </Typography>
+
+                    <Button
+                        variant="outlined"
+                        onClick={buscarPreCadastros}
+                        sx={{
+                            borderRadius: "8px",
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            color: theme.text.secondary,
+                            borderColor: theme.border.main,
+                            transition: "all 0.2s",
+                            // Usando &:focus para manter a cor ativa ao ser clicado, sem precisar de useState
+                            "&:focus": {
+                                bgcolor: "#0D6EFD", // Usei o Azul exato do Pré-Cadastro da sua API
+                                color: "#fff",
+                                borderColor: "#0D6EFD"
+                            }
+                        }}
+                    >
+                        Pré-cadastros
+                    </Button>
+
+                    <Button
+                        variant="outlined"
+                        onClick={buscarOrdens}
+                        sx={{
+                            borderRadius: "8px",
+                            fontWeight: 700,
+                            textTransform: 'none',
+                            color: theme.text.secondary,
+                            borderColor: theme.border.main,
+                            transition: "all 0.2s",
+                            "&:focus": {
+                                bgcolor: theme.text.secondary, // Uma cor neutra escura para os cadastros gerais
+                                color: "#fff",
+                                borderColor: theme.text.secondary
+                            }
+                        }}
+                    >
+                        Cadastros
+                    </Button>
+                </Stack>
+
+                {/* --- STACK DE FILTROS (STATUS DA API) E ORDENAÇÃO --- */}
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2, mb: 1 }} flexWrap="wrap" gap={2}>
+                    <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: theme.text.disabled, textTransform: 'uppercase' }}>
+                            Filtros:
+                        </Typography>
+
+
+                        {status?.map((value) =>(
+                            <Box
+                                key={value.id}
+                                onClick={() => buscarPorStatus(value.id)}
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    px: 1.5,
+                                    py: 0.5,
+                                    borderRadius: "99px",
+                                    cursor: "pointer",
+                                    border: "1px solid",
+
+                                    borderColor: filtroAtivo === value.id ? value.corHexadecimal : theme.border.main,
+                                    bgcolor: filtroAtivo === value.id ? `${value.corHexadecimal}15` : "transparent"
+                                }}
+                            >
                                 <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: value.corHexadecimal, mr: 1, boxShadow: `0 0 8px ${value.corHexadecimal}` }} />
-                                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem',color:theme.text.secondary }}>{value.descricao}</Typography>
-                            </Box>
-                        ):(
-                            <Box key={index} onClick={() => buscarPorStatus(value.id, index)} sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                px: 2,
-                                py: 0.5,
-                                borderRadius: "99px",
-                                cursor: "pointer",
-                                border: "2px solid",
-                                borderColor: filtroAtivo === index ? value.corHexadecimal : "transparent",
-                                bgcolor: filtroAtivo === index ? value.corHexadecimal : "orange",
-                                boxShadow: filtroAtivo === index ? `0 0 12px ${value.corHexadecimal}` : "none",
-                                transition: "all 0.2s ease-in-out"
-                            }}>
-                                <Box sx={{
-                                    width: 8,
-                                    height: 8,
-                                    borderRadius: "50%",
-                                    bgcolor: filtroAtivo === index ? "#fff" : value.corHexadecimal,
-                                    mr: 1
-                                }} />
-                                <Typography variant="body2" sx={{
-                                    fontWeight: 700,
-                                    fontSize: '0.75rem',
-                                    color: filtroAtivo === index ? "#fff" : theme.text.primary
-                                }}>
+                                <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: theme.text.secondary }}>
                                     {value.descricao}
                                 </Typography>
                             </Box>
@@ -428,7 +511,16 @@ const Principal = ({ isModalOpen, setIsModalOpen }: ListaEsperaProps) => {
 
 
             <Box sx={{ flex: 1, width: "100%", p: "0 24px 24px 24px", boxSizing: "border-box", overflow: "hidden" }}>
-                <Listagem rows={rows} coluna={coluna} fetchTodos={fetchTodos} newRowRef={newRowRef} handleRowClick={handleRowClick} status={status!} currentTheme={theme} mode={mode} />
+                <Listagem
+                    rows={rows}
+                    coluna={coluna}
+                    fetchTodos={buscarPreCadastros}
+                    newRowRef={newRowRef}
+                    handleRowClick={handleRowClick}
+                    status={status!}
+                    buscarPorStatus={buscarPorStatus}
+                    currentTheme={theme}
+                    mode={mode} />
             </Box>
         </Box>
     );

@@ -31,6 +31,7 @@ interface TabelaProps {
     coluna:any;
     currentTheme: ColorPalette;
     mode:ThemeMode;
+    buscarPorStatus:(id:number)=>void
 }
 
 interface TableRowItemProps {
@@ -41,6 +42,7 @@ interface TableRowItemProps {
     theme: ColorPalette;
     mode:ThemeMode
     statusList: StatusDTO[];
+    buscarPorStatus:(id:number)=>void;
 }
 
 
@@ -87,6 +89,8 @@ const TableRowItem = memo(({ row, handleMudarStatus, handleRowClick, statusList,
     const origemCarga = row.origem
 
     const podeMudarStatus = 'status' in row;
+
+
 
     const cellStyle = {
         fontSize: "0.875rem",
@@ -149,7 +153,7 @@ const definicaoLinhasTabela = (row:any)=>{
     <TableCell align="center"  sx={cellStyle}>{row.tipo || "-"}</TableCell>
     <TableCell align="center"  sx={cellStyle}>{row.produto || "-"}</TableCell>
     <TableCell align="center"  sx={cellStyle}>{row.pesoInicial || row.ordem}</TableCell>
-            <TableCell align="center" sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : row.pesoFinal} Kg</TableCell>
+            <TableCell align="center" sx={cellStyle}>{pesoExibicao ? pesoExibicao.toLocaleString('pt-BR') : row.pesoFinal} 0 Kg</TableCell>
 
 
             <TableCell align="center"  sx={cellStyle}>{formatarDataHora("previsaoChegada" in row ? row.previsaoChegada : 'dataCriacao' in row ? row.dataCriacao : "")}</TableCell>
@@ -178,7 +182,7 @@ const definicaoLinhasTabela = (row:any)=>{
     );
 });
 
-const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,coluna,mode }: TabelaProps) => {
+const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,coluna,mode,buscarPorStatus}: TabelaProps) => {
     const [tableRows, setTableRows] = useState<CadastroRow[]>(rows);
     const { NotificationModal, showNotification } = useNotification();
 
@@ -187,7 +191,7 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
     const handleMudarStatus = useCallback(async (row: CadastroRow) => {
 
         const idVeiculo = row.identificador
-    console.log("ID MOVIDO",idVeiculo)
+
         if (!idVeiculo) {
             showNotification("error", "Erro", "Identificador do veículo não encontrado.");
             return;
@@ -201,17 +205,18 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
             async () => {
 
 
-                const response = await ApiServices.mudarStatus(idVeiculo);
+                const {data, success,message} = await ApiServices.mudarStatus(idVeiculo);
 
 
-                if (response.success) {
+
+                if (success) {
                     showNotification("success", "Sucesso", "Status do veículo atualizado com sucesso!");
+                    buscarPorStatus(data.id)
 
 
-                    if (fetchTodos) fetchTodos();
 
                 } else {
-                    showNotification("error", "Erro ao mover veículo", response.message || "Ocorreu um erro no servidor.");
+                    showNotification("error", "Erro ao mover veículo", message || "Ocorreu um erro no servidor.");
                 }
             }
         );
@@ -280,6 +285,7 @@ const Listagem = ({ rows, fetchTodos, handleRowClick, status, currentTheme,colun
                                         index={index}
                                         row={row}
                                         mode={mode}
+                                        buscarPorStatus={buscarPorStatus}
                                         handleMudarStatus={handleMudarStatus}
                                         handleRowClick={handleRowClick}
                                         statusList={status}
